@@ -1,0 +1,6 @@
+{
+  "name": "Method Tricks",
+  "description": "Professional educational platform featuring Simple and Premium Methods, Courses, Admin Management, and manual bKash & Nagad payment verification.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
