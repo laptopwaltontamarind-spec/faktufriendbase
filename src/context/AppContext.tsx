@@ -66,8 +66,56 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, isPremium } = useAuth();
-  const [currentPage, setCurrentPage] = useState<AppPage>('home');
+  const { token, isPremium, isAdmin } = useAuth();
+  
+  // Initialize from hash if #admin
+  const [currentPage, setCurrentPageState] = useState<AppPage>(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#admin') {
+      return 'admin-login';
+    }
+    return 'home';
+  });
+
+  const setCurrentPage = (page: AppPage) => {
+    if (typeof window !== 'undefined') {
+      if (page === 'admin-dashboard' || page === 'admin-login') {
+        if (window.location.hash !== '#admin') {
+          window.location.hash = 'admin';
+        }
+      } else {
+        if (window.location.hash === '#admin') {
+          window.history.pushState(null, '', window.location.pathname);
+        }
+      }
+    }
+    setCurrentPageState(page);
+  };
+
+  // Listen to #admin hash changes from URL bar
+  useEffect(() => {
+    const handleHashCheck = () => {
+      if (window.location.hash === '#admin') {
+        if (isAdmin) {
+          setCurrentPageState('admin-dashboard');
+        } else {
+          setCurrentPageState('admin-login');
+        }
+      } else if (!window.location.hash && (currentPage === 'admin-login' || currentPage === 'admin-dashboard')) {
+        setCurrentPageState('home');
+      }
+    };
+
+    handleHashCheck();
+    window.addEventListener('hashchange', handleHashCheck);
+    return () => window.removeEventListener('hashchange', handleHashCheck);
+  }, [isAdmin, currentPage]);
+
+  // When admin logs in while on #admin, automatically promote to admin-dashboard
+  useEffect(() => {
+    if (isAdmin && (currentPage === 'admin-login' || window.location.hash === '#admin')) {
+      setCurrentPageState('admin-dashboard');
+    }
+  }, [isAdmin]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [selectedPackageForPayment, setSelectedPackageForPayment] = useState<MembershipPackage | null>(null);
   const [settings, setSettings] = useState<WebsiteSettings | null>(null);

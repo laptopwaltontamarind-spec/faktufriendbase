@@ -592,6 +592,7 @@ export const AdminDashboard: React.FC = () => {
 
           <button
             onClick={() => {
+              window.location.hash = '';
               setCurrentPage('home');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
@@ -602,7 +603,11 @@ export const AdminDashboard: React.FC = () => {
           </button>
 
           <button
-            onClick={logout}
+            onClick={() => {
+              window.location.hash = '';
+              logout();
+              setCurrentPage('home');
+            }}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4" />

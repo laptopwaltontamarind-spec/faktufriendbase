@@ -46,16 +46,13 @@ export const LoginPage: React.FC = () => {
   };
 
   // Quick fill demo helper
-  const handleQuickFill = (type: 'simple' | 'premium' | 'admin') => {
+  const handleQuickFill = (type: 'simple' | 'premium') => {
     if (type === 'simple') {
       setEmail('user@example.com');
       setPassword('user123456');
-    } else if (type === 'premium') {
+    } else {
       setEmail('premium@example.com');
       setPassword('premium123456');
-    } else {
-      setEmail('admin@methodtricks.com');
-      setPassword('admin123456');
     }
   };
 
@@ -81,27 +78,20 @@ export const LoginPage: React.FC = () => {
             <span>One-Click Demo Fill:</span>
             <span className="text-[10px] text-purple-400">Instant Test</span>
           </div>
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => handleQuickFill('simple')}
-              className="py-1 px-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium transition-colors cursor-pointer"
+              className="py-1.5 px-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium transition-colors cursor-pointer text-center"
             >
-              Simple User
+              Simple User (Free)
             </button>
             <button
               type="button"
               onClick={() => handleQuickFill('premium')}
-              className="py-1 px-2 rounded bg-purple-950/70 border border-purple-500/30 hover:bg-purple-900/60 text-purple-300 text-[11px] font-medium transition-colors cursor-pointer"
+              className="py-1.5 px-2 rounded bg-purple-950/70 border border-purple-500/30 hover:bg-purple-900/60 text-purple-300 text-[11px] font-medium transition-colors cursor-pointer text-center"
             >
-              VIP User
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickFill('admin')}
-              className="py-1 px-2 rounded bg-indigo-950/70 border border-indigo-500/30 hover:bg-indigo-900/60 text-indigo-300 text-[11px] font-medium transition-colors cursor-pointer"
-            >
-              Admin
+              VIP User (Premium)
             </button>
           </div>
         </div>
@@ -175,17 +165,6 @@ export const LoginPage: React.FC = () => {
             className="text-purple-400 font-semibold hover:underline cursor-pointer"
           >
             Register Free
-          </button>
-        </div>
-
-        {/* Separate Admin Portal Link */}
-        <div className="mt-4 pt-4 border-t border-slate-800 text-center">
-          <button
-            onClick={() => setCurrentPage('admin-login')}
-            className="text-[11px] text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 cursor-pointer"
-          >
-            <ShieldAlert className="w-3.5 h-3.5" />
-            <span>Go to Dedicated Admin Login</span>
           </button>
         </div>
       </div>

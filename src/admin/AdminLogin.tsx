@@ -7,8 +7,8 @@ export const AdminLogin: React.FC = () => {
   const { adminLogin } = useAuth();
   const { setCurrentPage, showToast } = useApp();
 
-  const [email, setEmail] = useState('admin@methodtricks.com');
-  const [password, setPassword] = useState('admin123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,7 +18,8 @@ export const AdminLogin: React.FC = () => {
     setLoading(false);
 
     if (res.success) {
-      showToast('Admin session authorized!', 'success');
+      showToast('Admin authorized!', 'success');
+      window.location.hash = 'admin';
       setCurrentPage('admin-dashboard');
     } else {
       showToast(res.error || 'Invalid admin credentials', 'error');
@@ -29,7 +30,10 @@ export const AdminLogin: React.FC = () => {
     <div className="w-full min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full bg-[#0a0d18] border border-indigo-500/30 rounded-2xl p-8 shadow-2xl relative">
         <button
-          onClick={() => setCurrentPage('home')}
+          onClick={() => {
+            window.location.hash = '';
+            setCurrentPage('home');
+          }}
           className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors mb-6 cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -44,26 +48,8 @@ export const AdminLogin: React.FC = () => {
           Admin Portal Authentication
         </h2>
         <p className="text-slate-400 text-xs text-center mb-6">
-          Restricted area for Method Tricks system administrators and verification officers.
+          Access restricted to administrators. Enter your admin email and password.
         </p>
-
-        {/* Demo Fast Autofill */}
-        <div className="mb-6 p-3 bg-indigo-950/40 border border-indigo-500/30 rounded-xl text-xs flex items-center justify-between">
-          <div>
-            <div className="font-semibold text-indigo-300">Default Credentials</div>
-            <div className="text-[11px] text-slate-400 font-mono">admin@methodtricks.com / admin123456</div>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setEmail('admin@methodtricks.com');
-              setPassword('admin123456');
-            }}
-            className="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[11px] font-semibold"
-          >
-            Auto-fill
-          </button>
-        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
