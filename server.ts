@@ -72,13 +72,13 @@ const initialData: AppData = {
   users: [
     {
       id: 'usr_admin',
-      name: 'System Admin',
-      email: 'admin@methodtricks.com',
+      name: 'Shykot Admin',
+      email: 'adminSHYKOT@gmail.com',
       phone: '01700-000000',
       role: 'admin',
       createdAt: '2026-01-01T00:00:00.000Z',
       status: 'active',
-      passwordHash: hashPassword('admin123456')
+      passwordHash: hashPassword('adminSHYKOT')
     },
     {
       id: 'usr_demo_simple',
@@ -517,7 +517,27 @@ function readDB(): AppData {
   try {
     if (fs.existsSync(DB_FILE)) {
       const data = fs.readFileSync(DB_FILE, 'utf-8');
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      const admin = parsed.users.find((u: any) => u.role === 'admin' || u.email.toLowerCase() === 'adminshykot@gmail.com');
+      if (admin) {
+        admin.email = 'adminSHYKOT@gmail.com';
+        admin.name = 'Shykot Admin';
+        admin.role = 'admin';
+        admin.status = 'active';
+        admin.passwordHash = hashPassword('adminSHYKOT');
+      } else {
+        parsed.users.unshift({
+          id: 'usr_admin',
+          name: 'Shykot Admin',
+          email: 'adminSHYKOT@gmail.com',
+          phone: '01700-000000',
+          role: 'admin',
+          createdAt: new Date().toISOString(),
+          status: 'active',
+          passwordHash: hashPassword('adminSHYKOT')
+        });
+      }
+      return parsed;
     }
   } catch (err) {
     console.error('Error reading DB, using initial data', err);

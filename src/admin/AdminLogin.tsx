@@ -63,7 +63,7 @@ export const AdminLogin: React.FC = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@methodtricks.com"
+                placeholder="adminSHYKOT@gmail.com"
                 className="w-full pl-9 pr-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-slate-200 text-xs focus:outline-none focus:border-indigo-500"
               />
             </div>
