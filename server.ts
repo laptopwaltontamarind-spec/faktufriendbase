@@ -79,437 +79,14 @@ const initialData: AppData = {
       createdAt: '2026-01-01T00:00:00.000Z',
       status: 'active',
       passwordHash: hashPassword('adminSHYKOT')
-    },
-    {
-      id: 'usr_demo_simple',
-      name: 'Tanvir Ahmed',
-      email: 'user@example.com',
-      phone: '01712-345678',
-      role: 'simple',
-      createdAt: '2026-02-15T10:30:00.000Z',
-      status: 'active',
-      passwordHash: hashPassword('user123456'),
-      downloadHistory: []
-    },
-    {
-      id: 'usr_demo_premium',
-      name: 'Rahim Uddin',
-      email: 'premium@example.com',
-      phone: '01819-876543',
-      role: 'premium',
-      createdAt: '2026-02-01T09:15:00.000Z',
-      premiumExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'active',
-      passwordHash: hashPassword('premium123456'),
-      downloadHistory: ['m_prem_1']
     }
   ],
-  packages: [
-    {
-      id: 'pkg_7days',
-      name: '7 Days Pass',
-      priceBDT: 250,
-      durationDays: 7,
-      description: 'Quick trial access to test all premium methods and courses without limits.',
-      benefits: [
-        'Full access to all Premium Methods',
-        'Stream all Premium Courses in 1080p',
-        'Direct file downloads unlocked',
-        '100% Ad-Free browsing experience',
-        'Community discussion support'
-      ],
-      isActive: true,
-      isPopular: false
-    },
-    {
-      id: 'pkg_30days',
-      name: '30 Days Monthly Pass',
-      priceBDT: 750,
-      durationDays: 30,
-      description: 'Our most popular plan. Ideal for learners building their digital skills foundation.',
-      benefits: [
-        'Unlimited access to all Premium Methods',
-        'Full access to all Premium Masterclasses',
-        'Unlimited fast direct file downloads',
-        'Zero advertisements across the entire site',
-        'Priority verification within 15 minutes',
-        'Exclusive premium updates every week'
-      ],
-      isActive: true,
-      isPopular: true
-    },
-    {
-      id: 'pkg_90days',
-      name: '90 Days Quarterly Pass',
-      priceBDT: 1800,
-      durationDays: 90,
-      description: 'Dedicated 3-month skill acceleration track with 20% savings.',
-      benefits: [
-        'All Premium Methods + upcoming releases',
-        'All Premium Courses + project resources',
-        'Fastest dedicated download mirrors',
-        'Strictly Ad-Free VIP experience',
-        'Direct WhatsApp support from instructors',
-        'Early access to fresh secret tricks'
-      ],
-      isActive: true,
-      isPopular: false
-    },
-    {
-      id: 'pkg_365days',
-      name: '365 Days Yearly VIP',
-      priceBDT: 4500,
-      durationDays: 365,
-      description: 'Ultimate annual VIP access with maximum savings and continuous master updates.',
-      benefits: [
-        'Complete 1-year unlimited access to EVERYTHING',
-        'All current and future premium methods',
-        'All current and future premium courses',
-        'Zero Ads, maximum bandwidth video streaming',
-        'VIP Badge on user dashboard',
-        'Direct 1-on-1 mentorship Q&A session'
-      ],
-      isActive: true,
-      isPopular: false
-    }
-  ],
-  methods: [
-    {
-      id: 'm_simp_1',
-      title: 'Free Canva Pro Feature Workaround & Design Workflow',
-      type: 'simple',
-      category: 'Design & Graphics',
-      description: 'Learn how to utilize free SVG assets, transparent PNG generators, and font pairings inside standard Canva to produce agency-grade social media banners and graphics without paying for premium licenses.',
-      thumbnailUrl: '/src/assets/images/hero_method_tricks_tech_1794218786220.jpg',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-      videoSourceType: 'direct',
-      downloadAllowed: true,
-      downloadUrl: '#free-canva-assets-pack.zip',
-      fileName: 'canva-free-templates-pack.zip',
-      fileSize: '14.2 MB',
-      views: 3420,
-      likes: 284,
-      isPublished: true,
-      uploadDate: '2026-02-10'
-    },
-    {
-      id: 'm_simp_2',
-      title: 'High-Converting Facebook Post Copywriting Framework',
-      type: 'simple',
-      category: 'Digital Marketing',
-      description: 'A 4-step framework used by top digital marketers in Bangladesh to craft viral organic Facebook posts, drive organic reach, and generate inquiries without spending a dime on sponsored boosts.',
-      thumbnailUrl: '/src/assets/images/course_mastery_preview_1794218786269.jpg',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-      videoSourceType: 'direct',
-      downloadAllowed: true,
-      downloadUrl: '#fb-copy-templates.pdf',
-      fileName: 'organic-fb-formula.pdf',
-      fileSize: '3.1 MB',
-      views: 2150,
-      likes: 195,
-      isPublished: true,
-      uploadDate: '2026-02-14'
-    },
-    {
-      id: 'm_simp_3',
-      title: 'Browser Automation with Keyboard Shortcuts & Free Tools',
-      type: 'simple',
-      category: 'Productivity',
-      description: 'Supercharge your daily workflow by mapping custom automation shortcuts, automated text expansion, and quick form-fillers across Chrome and Edge browsers.',
-      thumbnailUrl: '/src/assets/images/bkash_nagad_payment_badge_1794218787225.jpg',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-      videoSourceType: 'direct',
-      downloadAllowed: false,
-      views: 1890,
-      likes: 142,
-      isPublished: true,
-      uploadDate: '2026-02-20'
-    },
-    {
-      id: 'm_prem_1',
-      title: 'VIP Master Trick: Facebook Ads Credit & Spend Optimization Bypass',
-      type: 'premium',
-      category: 'Digital Marketing',
-      description: 'Exclusive, tested blueprint for setting up high-authority business managers, avoiding sudden account disabled bans, maintaining warm payment thresholds, and optimizing CPI for mobile apps and lead generation in Bangladesh and international markets.',
-      thumbnailUrl: '/src/assets/images/premium_vip_banner_1794218787697.jpg',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-      videoSourceType: 'direct',
-      downloadAllowed: true,
-      downloadUrl: '#vip-meta-bm-setup-guide.zip',
-      fileName: 'meta-vip-security-guide-2026.zip',
-      fileSize: '48.6 MB',
-      views: 4890,
-      likes: 672,
-      isPublished: true,
-      uploadDate: '2026-02-22'
-    },
-    {
-      id: 'm_prem_2',
-      title: 'VIP Cloudflare Worker Proxy & Bypass Geo-Restrictions',
-      type: 'premium',
-      category: 'Web Tech & Cloud',
-      description: 'Complete serverless setup using Cloudflare Workers to build personal reverse proxies, custom routing engines, and rate-limiting shielding for high-traffic web tools.',
-      thumbnailUrl: '/src/assets/images/hero_method_tricks_tech_1794218786220.jpg',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-      videoSourceType: 'direct',
-      downloadAllowed: true,
-      downloadUrl: '#cf-workers-source.zip',
-      fileName: 'cloudflare-worker-proxy-v3.zip',
-      fileSize: '12.8 MB',
-      views: 3120,
-      likes: 418,
-      isPublished: true,
-      uploadDate: '2026-02-25'
-    },
-    {
-      id: 'm_prem_3',
-      title: 'VIP Automated Video Editing Workflow with Premiere & Python',
-      type: 'premium',
-      category: 'Video Editing',
-      description: 'Automate cutting silences, generating bilingual captions, and rendering 50+ vertical short-form reels in minutes using an automated Python CLI coupled with Premiere Pro dynamic links.',
-      thumbnailUrl: '/src/assets/images/course_mastery_preview_1794218786269.jpg',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-      videoSourceType: 'direct',
-      downloadAllowed: true,
-      downloadUrl: '#video-automation-scripts.zip',
-      fileName: 'batch-reels-automation-suite.zip',
-      fileSize: '65.4 MB',
-      views: 3980,
-      likes: 540,
-      isPublished: true,
-      uploadDate: '2026-02-28'
-    }
-  ],
-  courses: [
-    {
-      id: 'c_simp_1',
-      title: 'Fundamentals of Web Development: HTML5, Modern CSS & JavaScript',
-      type: 'simple',
-      category: 'Coding & Tech',
-      description: 'A comprehensive beginner bootcamp covering modern web foundations. From semantic tags, flexbox and grid layouts, to interactive DOM manipulation and asynchronous API fetching.',
-      thumbnailUrl: '/src/assets/images/course_mastery_preview_1794218786269.jpg',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
-      downloadAllowed: true,
-      downloadUrl: '#web-fundamentals-code.zip',
-      fileName: 'web-beginner-exercises.zip',
-      isPublished: true,
-      uploadDate: '2026-01-20',
-      order: 1,
-      totalDuration: '3 Hours 45 Mins',
-      instructor: 'Sabbir Hossain',
-      lessons: [
-        {
-          id: 'l_simp_1',
-          title: 'Lesson 1: Modern HTML5 & Web Semantics',
-          duration: '35 mins',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-          description: 'Understanding DOM hierarchy, semantic landmarks, and meta tags.',
-          order: 1
-        },
-        {
-          id: 'l_simp_2',
-          title: 'Lesson 2: Flexbox & CSS Grid Mastery',
-          duration: '50 mins',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-          description: 'Building responsive desktop and mobile viewports with CSS Grid and Flex layouts.',
-          order: 2
-        },
-        {
-          id: 'l_simp_3',
-          title: 'Lesson 3: JavaScript DOM & Event Handlers',
-          duration: '60 mins',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-          description: 'Interactive buttons, form validation, and event delegation.',
-          order: 3
-        }
-      ]
-    },
-    {
-      id: 'c_simp_2',
-      title: 'Digital Freelancing 101: Marketplace Setup & Client Closing',
-      type: 'simple',
-      category: 'Freelancing',
-      description: 'Master the fundamentals of setting up international freelancing profiles on Upwork and Fiverr, creating compelling gig portfolios, and communicating professionally with foreign buyers.',
-      thumbnailUrl: '/src/assets/images/hero_method_tricks_tech_1794218786220.jpg',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
-      downloadAllowed: true,
-      downloadUrl: '#freelance-templates.pdf',
-      fileName: 'client-proposal-templates.pdf',
-      isPublished: true,
-      uploadDate: '2026-01-28',
-      order: 2,
-      totalDuration: '2 Hours 30 Mins',
-      instructor: 'Farhan Karim',
-      lessons: [
-        {
-          id: 'l_simp_4',
-          title: 'Lesson 1: Profile Optimization & Portfolio Showcase',
-          duration: '45 mins',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
-          description: 'Setting up a 100% verified profile with high-ranking keywords.',
-          order: 1
-        },
-        {
-          id: 'l_simp_5',
-          title: 'Lesson 2: Winning Proposal Writing Tactics',
-          duration: '40 mins',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-          description: 'The exact proposal hook that converts job posts into interviews.',
-          order: 2
-        }
-      ]
-    },
-    {
-      id: 'c_prem_1',
-      title: 'VIP Masterclass: Advanced Full-Stack SaaS Architecture & Microservices',
-      type: 'premium',
-      category: 'Coding & Tech',
-      description: 'Comprehensive 8-hour masterclass on constructing production-ready SaaS platforms. Covers database sharding, token rotation, payment gateway webhooks, automated CI/CD pipelines, and high-concurrency caching.',
-      thumbnailUrl: '/src/assets/images/course_mastery_preview_1794218786269.jpg',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
-      downloadAllowed: true,
-      downloadUrl: '#vip-saas-starter-kit.zip',
-      fileName: 'fullstack-saas-starter-kit.zip',
-      isPublished: true,
-      uploadDate: '2026-02-05',
-      order: 1,
-      totalDuration: '8 Hours 15 Mins',
-      instructor: 'Engr. M. Rahman',
-      lessons: [
-        {
-          id: 'l_prem_1',
-          title: 'Lesson 1: System Architecture & Distributed Data Models',
-          duration: '65 mins',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-          description: 'Deep dive into microservices vs modular monoliths and database replication.',
-          order: 1
-        },
-        {
-          id: 'l_prem_2',
-          title: 'Lesson 2: Token-Based Auth, RBAC & Session Security',
-          duration: '70 mins',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-          description: 'Implementing battle-tested authentication with role-based access control.',
-          order: 2
-        },
-        {
-          id: 'l_prem_3',
-          title: 'Lesson 3: Webhook Verification, Payments & Idempotency',
-          duration: '80 mins',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-          description: 'Guaranteed payment state machines, retries, and audit trails.',
-          order: 3
-        }
-      ]
-    },
-    {
-      id: 'c_prem_2',
-      title: 'VIP Masterclass: High-Ticket International Digital Agency Scaling',
-      type: 'premium',
-      category: 'Agency & Business',
-      description: 'The proven step-by-step playbook to land $1,500 - $5,000/month recurring clients from USA, UK, and Australia for SEO, automated marketing systems, and web development.',
-      thumbnailUrl: '/src/assets/images/premium_vip_banner_1794218787697.jpg',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4',
-      downloadAllowed: true,
-      downloadUrl: '#vip-agency-contracts-sop.zip',
-      fileName: 'international-agency-contracts-sop.zip',
-      isPublished: true,
-      uploadDate: '2026-02-18',
-      order: 2,
-      totalDuration: '6 Hours 40 Mins',
-      instructor: 'Zubair Al Mamun',
-      lessons: [
-        {
-          id: 'l_prem_4',
-          title: 'Lesson 1: Cold Email Infrastructure & Domain Deliverability',
-          duration: '55 mins',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-          description: 'SPF, DKIM, DMARC, warm-up tools, and inbox placement protocols.',
-          order: 1
-        },
-        {
-          id: 'l_prem_5',
-          title: 'Lesson 2: High-Ticket Discovery Call Scripting & Closing',
-          duration: '75 mins',
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-          description: 'How to diagnose client pain points and close deals without hard selling.',
-          order: 2
-        }
-      ]
-    }
-  ],
-  payments: [
-    {
-      id: 'pay_demo_1',
-      userId: 'usr_demo_premium',
-      userName: 'Rahim Uddin',
-      userEmail: 'premium@example.com',
-      userPhone: '01819-876543',
-      packageId: 'pkg_30days',
-      packageName: '30 Days Monthly Pass',
-      packageDays: 30,
-      amountBDT: 750,
-      method: 'bKash',
-      senderNumber: '01819-876543',
-      transactionId: 'BK9A77X992',
-      screenshotUrl: '/src/assets/images/bkash_nagad_payment_badge_1794218787225.jpg',
-      status: 'approved',
-      submittedAt: '2026-02-01T08:30:00.000Z',
-      reviewedAt: '2026-02-01T09:15:00.000Z',
-      reviewedBy: 'usr_admin'
-    }
-  ],
-  advertisements: [
-    {
-      id: 'ad_1',
-      title: 'Top Cloud Hosting – 70% Off for Students',
-      imageUrl: '/src/assets/images/hero_method_tricks_tech_1794218786220.jpg',
-      targetUrl: 'https://example.com/host-deal',
-      placement: 'home_top',
-      isEnabled: true,
-      displayOrder: 1,
-      clicks: 142
-    },
-    {
-      id: 'ad_2',
-      title: 'Best Tech Gadgets & Accessories BD',
-      imageUrl: '/src/assets/images/bkash_nagad_payment_badge_1794218787225.jpg',
-      targetUrl: 'https://example.com/tech-bd',
-      placement: 'video_banner',
-      isEnabled: true,
-      displayOrder: 2,
-      clicks: 89
-    },
-    {
-      id: 'ad_3',
-      title: 'Hire Verified Remote Developers',
-      imageUrl: '/src/assets/images/course_mastery_preview_1794218786269.jpg',
-      targetUrl: 'https://example.com/remote-dev',
-      placement: 'download_page',
-      isEnabled: true,
-      displayOrder: 3,
-      clicks: 56
-    }
-  ],
-  notifications: [
-    {
-      id: 'notif_1',
-      title: 'Welcome to Method Tricks!',
-      message: 'Explore our free methods and courses. Upgrade to Premium anytime to unlock exclusive VIP tricks and masterclasses.',
-      type: 'info',
-      createdAt: '2026-02-01T00:00:00.000Z',
-      isRead: false
-    },
-    {
-      id: 'notif_2',
-      userId: 'usr_demo_premium',
-      title: 'Premium Membership Approved!',
-      message: 'Your payment via bKash (TrxID: BK9A77X992) for 30 Days Monthly Pass has been verified. Welcome to VIP access!',
-      type: 'payment',
-      createdAt: '2026-02-01T09:15:00.000Z',
-      isRead: false
-    }
-  ]
+  packages: [],
+  methods: [],
+  courses: [],
+  payments: [],
+  advertisements: [],
+  notifications: []
 };
 
 // Utility functions for Database
@@ -518,6 +95,14 @@ function readDB(): AppData {
     if (fs.existsSync(DB_FILE)) {
       const data = fs.readFileSync(DB_FILE, 'utf-8');
       const parsed = JSON.parse(data);
+      parsed.packages = Array.isArray(parsed.packages) ? parsed.packages : [];
+      parsed.methods = Array.isArray(parsed.methods) ? parsed.methods : [];
+      parsed.courses = Array.isArray(parsed.courses) ? parsed.courses : [];
+      parsed.payments = Array.isArray(parsed.payments) ? parsed.payments : [];
+      parsed.advertisements = Array.isArray(parsed.advertisements) ? parsed.advertisements : [];
+      parsed.notifications = Array.isArray(parsed.notifications) ? parsed.notifications : [];
+      parsed.users = Array.isArray(parsed.users) ? parsed.users : [];
+
       const admin = parsed.users.find((u: any) => u.role === 'admin' || u.email.toLowerCase() === 'adminshykot@gmail.com');
       if (admin) {
         admin.email = 'adminSHYKOT@gmail.com';
@@ -1540,6 +1125,60 @@ app.get('/api/admin/analytics', (req, res) => {
     premiumCourses,
     conversionRate: totalUsers > 0 ? ((premiumUsers / totalUsers) * 100).toFixed(1) : '0'
   });
+});
+
+// --- DATABASE BACKUP & RESTORE (ADMIN) ---
+app.get('/api/admin/backup', (req, res) => {
+  const decoded = parseToken(req.headers.authorization);
+  if (!decoded || decoded.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+
+  const db = readDB();
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="methodtricks_backup_${new Date().toISOString().split('T')[0]}.json"`);
+  return res.send(JSON.stringify(db, null, 2));
+});
+
+app.post('/api/admin/restore', (req, res) => {
+  const decoded = parseToken(req.headers.authorization);
+  if (!decoded || decoded.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required.' });
+  }
+
+  const backupData = req.body;
+  if (!backupData || typeof backupData !== 'object') {
+    return res.status(400).json({ error: 'Invalid backup JSON data.' });
+  }
+
+  const currentDB = readDB();
+  const restoredDB: AppData = {
+    settings: backupData.settings || currentDB.settings,
+    users: Array.isArray(backupData.users) ? backupData.users : currentDB.users,
+    packages: Array.isArray(backupData.packages) ? backupData.packages : [],
+    methods: Array.isArray(backupData.methods) ? backupData.methods : [],
+    courses: Array.isArray(backupData.courses) ? backupData.courses : [],
+    payments: Array.isArray(backupData.payments) ? backupData.payments : [],
+    advertisements: Array.isArray(backupData.advertisements) ? backupData.advertisements : [],
+    notifications: Array.isArray(backupData.notifications) ? backupData.notifications : []
+  };
+
+  const hasAdmin = restoredDB.users.some(u => u.email.toLowerCase() === 'adminshykot@gmail.com');
+  if (!hasAdmin) {
+    restoredDB.users.unshift({
+      id: 'usr_admin',
+      name: 'Shykot Admin',
+      email: 'adminSHYKOT@gmail.com',
+      phone: '01700-000000',
+      role: 'admin',
+      createdAt: new Date().toISOString(),
+      status: 'active',
+      passwordHash: hashPassword('adminSHYKOT')
+    });
+  }
+
+  writeDB(restoredDB);
+  return res.json({ success: true, message: 'Database successfully restored.' });
 });
 
 // --- PROTECTED MEDIA DOWNLOAD GATEWAY ---

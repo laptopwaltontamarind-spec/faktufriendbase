@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { useApp } from '../context/AppContext.tsx';
 import type { 
@@ -8,7 +8,8 @@ import type {
   PaymentSubmission, 
   Advertisement, 
   WebsiteSettings,
-  Lesson 
+  Lesson,
+  MembershipPackage 
 } from '../types/index.ts';
 import { 
   LayoutDashboard, 
@@ -40,7 +41,12 @@ import {
   Home, 
   Database,
   ArrowUpRight,
-  Info
+  Info,
+  Tag,
+  Coins,
+  DownloadCloud,
+  UploadCloud,
+  Sparkles
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -49,6 +55,7 @@ export const AdminDashboard: React.FC = () => {
 
   type AdminTab = 
     | 'overview' 
+    | 'packages'
     | 'simple-methods' 
     | 'premium-methods' 
     | 'simple-courses' 
@@ -67,12 +74,17 @@ export const AdminDashboard: React.FC = () => {
   const [analytics, setAnalytics] = useState<any>(null);
   const [methods, setMethods] = useState<MethodItem[]>([]);
   const [courses, setCourses] = useState<CourseItem[]>([]);
+  const [packagesList, setPackagesList] = useState<MembershipPackage[]>([]);
   const [usersList, setUsersList] = useState<User[]>([]);
   const [paymentsList, setPaymentsList] = useState<PaymentSubmission[]>([]);
   const [adsList, setAdsList] = useState<Advertisement[]>([]);
   const [adminSettings, setAdminSettings] = useState<WebsiteSettings | null>(null);
 
   // Modals
+  const [packageModalOpen, setPackageModalOpen] = useState(false);
+  const [editingPackage, setEditingPackage] = useState<Partial<MembershipPackage> | null>(null);
+  const [newBenefitText, setNewBenefitText] = useState('');
+
   const [methodModalOpen, setMethodModalOpen] = useState(false);
   const [editingMethod, setEditingMethod] = useState<Partial<MethodItem> | null>(null);
   
@@ -95,6 +107,7 @@ export const AdminDashboard: React.FC = () => {
 
   const [userSearch, setUserSearch] = useState('');
   const [firebaseGuideOpen, setFirebaseGuideOpen] = useState(false);
+  const restoreFileRef = useRef<HTMLInputElement | null>(null);
 
   // Fetch all admin data
   const loadAdminData = async () => {
@@ -102,14 +115,15 @@ export const AdminDashboard: React.FC = () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
       
-      const [anRes, mRes, cRes, uRes, pRes, adRes, sRes] = await Promise.all([
+      const [anRes, mRes, cRes, uRes, pRes, adRes, sRes, pkgRes] = await Promise.all([
         fetch('/api/admin/analytics', { headers }),
         fetch('/api/methods', { headers }),
         fetch('/api/courses', { headers }),
         fetch('/api/admin/users', { headers }),
         fetch('/api/payments', { headers }),
         fetch('/api/admin/ads', { headers }),
-        fetch('/api/settings')
+        fetch('/api/settings'),
+        fetch('/api/packages')
       ]);
 
       if (anRes.ok) setAnalytics(await anRes.json());
@@ -119,6 +133,7 @@ export const AdminDashboard: React.FC = () => {
       if (pRes.ok) setPaymentsList(await pRes.json());
       if (adRes.ok) setAdsList(await adRes.json());
       if (sRes.ok) setAdminSettings(await sRes.json());
+      if (pkgRes.ok) setPackagesList(await pkgRes.json());
     } catch (err) {
       console.error('Failed to load admin dataset', err);
     }
@@ -143,6 +158,187 @@ export const AdminDashboard: React.FC = () => {
       </div>
     );
   }
+
+  // --- PACKAGE & PRICING HANDLERS ---
+  const handleSavePackage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPackage?.name || !editingPackage?.priceBDT || !editingPackage?.durationDays) {
+      showToast('Name, price in BDT (৳), and duration in days are required!', 'error');
+      return;
+    }
+    try {
+      const isEdit = Boolean(editingPackage.id);
+      const url = isEdit ? `/api/packages/${editingPackage.id}` : '/api/packages';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...editingPackage,
+          priceBDT: Number(editingPackage.priceBDT),
+          durationDays: Number(editingPackage.durationDays),
+          benefits: editingPackage.benefits && editingPackage.benefits.length > 0 
+            ? editingPackage.benefits 
+            : ['All Premium Methods Unlocked', 'Zero Ads Guaranteed', 'Direct High-Speed Downloads']
+        })
+      });
+
+      if (res.ok) {
+        showToast(isEdit ? 'Package updated successfully!' : 'New Package created!', 'success');
+        setPackageModalOpen(false);
+        setEditingPackage(null);
+        setNewBenefitText('');
+        loadAdminData();
+      } else {
+        const errData = await res.json();
+        showToast(errData.error || 'Failed to save package', 'error');
+      }
+    } catch {
+      showToast('Network error saving package', 'error');
+    }
+  };
+
+  const handleDeletePackage = async (id: string) => {
+    if (!confirm('Are you sure you want to permanently delete this package?')) return;
+    try {
+      const res = await fetch(`/api/packages/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        showToast('Package removed successfully.', 'info');
+        loadAdminData();
+      } else {
+        showToast('Failed to delete package', 'error');
+      }
+    } catch {
+      showToast('Network error deleting package', 'error');
+    }
+  };
+
+  const handleGenerateDefaultPackageTiers = async () => {
+    const defaultTiers = [
+      {
+        name: '7 Days Trial Pass',
+        durationDays: 7,
+        priceBDT: 300,
+        description: 'Quick trial access to unlock all premium methods & courses.',
+        benefits: ['Access All VIP Methods', 'Access All Premium Courses', 'Fast Direct File Downloads', 'Zero Advertisements'],
+        isActive: true,
+        isPopular: false
+      },
+      {
+        name: '30 Days Monthly Pass',
+        durationDays: 30,
+        priceBDT: 850,
+        description: 'Our most popular monthly VIP plan for active learners.',
+        benefits: ['Access All VIP Methods', 'Access All Premium Courses', 'Unlimited Direct Downloads', 'Zero Advertisements', 'Weekly New Content Updates'],
+        isActive: true,
+        isPopular: true
+      },
+      {
+        name: '90 Days Quarterly Pass',
+        durationDays: 90,
+        priceBDT: 2200,
+        description: '3 months full access with high discount.',
+        benefits: ['Access All VIP Methods', 'Access All Premium Courses', 'Unlimited Direct Downloads', 'Zero Advertisements', 'Priority Member Support'],
+        isActive: true,
+        isPopular: false
+      },
+      {
+        name: '365 Days Annual VIP Pass',
+        durationDays: 365,
+        priceBDT: 5000,
+        description: '1 full year unlimited mastery pass with greatest value.',
+        benefits: ['Access All VIP Methods for 1 Year', 'All Present & Future Premium Courses', 'Fastest High-Speed Mirrors', 'Ad-Free VIP Experience', 'Direct Admin WhatsApp Support'],
+        isActive: true,
+        isPopular: false
+      }
+    ];
+
+    try {
+      for (const tier of defaultTiers) {
+        await fetch('/api/packages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(tier)
+        });
+      }
+      showToast('Created 7, 30, 90, 365 Days slots! You can now adjust their prices anytime.', 'success');
+      loadAdminData();
+    } catch {
+      showToast('Failed to generate template packages', 'error');
+    }
+  };
+
+  // --- DATABASE BACKUP & RESTORE ---
+  const handleDownloadBackup = async () => {
+    try {
+      const res = await fetch('/api/admin/backup', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Backup failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `methodtricks_database_backup_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showToast('Full Database Backup JSON downloaded safely!', 'success');
+    } catch {
+      showToast('Failed to download backup', 'error');
+    }
+  };
+
+  const handleRestoreBackupFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!confirm('Warning: Restoring will overwrite the current database with this backup file. Proceed?')) {
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const jsonContent = JSON.parse(evt.target?.result as string);
+          const res = await fetch('/api/admin/restore', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(jsonContent)
+          });
+          if (res.ok) {
+            showToast('Database restored successfully from backup!', 'success');
+            loadAdminData();
+          } else {
+            showToast('Failed to restore database from backup file', 'error');
+          }
+        } catch {
+          showToast('Invalid backup JSON file format', 'error');
+        }
+      };
+      reader.readAsText(file);
+    } catch {
+      showToast('Error reading backup file', 'error');
+    } finally {
+      e.target.value = '';
+    }
+  };
 
   // --- METHOD HANDLERS ---
   const handleSaveMethod = async (e: React.FormEvent) => {
@@ -424,7 +620,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* 12 Admin Tabs */}
+          {/* 13 Admin Tabs */}
           <nav className="space-y-1 text-xs font-medium">
             <button
               onClick={() => setActiveTab('overview')}
@@ -437,6 +633,21 @@ export const AdminDashboard: React.FC = () => {
             </button>
 
             <button
+              onClick={() => setActiveTab('packages')}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors cursor-pointer ${
+                activeTab === 'packages' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow-md shadow-purple-600/30' : 'text-purple-300 hover:text-white hover:bg-slate-900'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Tag className="w-4 h-4 text-purple-400" />
+                <span>2. Packages & Pricing</span>
+              </div>
+              <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-purple-950 text-purple-300 border border-purple-500/30 font-bold">
+                {packagesList.length}
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('simple-methods')}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors cursor-pointer ${
                 activeTab === 'simple-methods' ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-400 hover:text-white hover:bg-slate-900'
@@ -444,7 +655,7 @@ export const AdminDashboard: React.FC = () => {
             >
               <div className="flex items-center gap-2.5">
                 <FileVideo className="w-4 h-4" />
-                <span>2. Simple Methods</span>
+                <span>3. Simple Methods</span>
               </div>
               <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300">
                 {simpleMethodsList.length}
@@ -459,7 +670,7 @@ export const AdminDashboard: React.FC = () => {
             >
               <div className="flex items-center gap-2.5">
                 <Crown className="w-4 h-4 text-purple-400" />
-                <span>3. Premium Methods</span>
+                <span>4. Premium Methods</span>
               </div>
               <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-purple-950 text-purple-300 border border-purple-500/30">
                 {premiumMethodsList.length}
@@ -474,7 +685,7 @@ export const AdminDashboard: React.FC = () => {
             >
               <div className="flex items-center gap-2.5">
                 <GraduationCap className="w-4 h-4" />
-                <span>4. Simple Courses</span>
+                <span>5. Simple Courses</span>
               </div>
               <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300">
                 {simpleCoursesList.length}
@@ -489,7 +700,7 @@ export const AdminDashboard: React.FC = () => {
             >
               <div className="flex items-center gap-2.5">
                 <Crown className="w-4 h-4 text-purple-400" />
-                <span>5. Premium Courses</span>
+                <span>6. Premium Courses</span>
               </div>
               <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-purple-950 text-purple-300 border border-purple-500/30">
                 {premiumCoursesList.length}
@@ -504,7 +715,7 @@ export const AdminDashboard: React.FC = () => {
             >
               <div className="flex items-center gap-2.5">
                 <Users className="w-4 h-4" />
-                <span>6. Manage Users</span>
+                <span>7. Manage Users</span>
               </div>
               <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300">
                 {usersList.length}
@@ -519,7 +730,7 @@ export const AdminDashboard: React.FC = () => {
             >
               <div className="flex items-center gap-2.5">
                 <CreditCard className="w-4 h-4 text-emerald-400" />
-                <span>7. Payment Requests</span>
+                <span>8. Payment Requests</span>
               </div>
               {paymentsList.filter(p => p.status === 'pending').length > 0 && (
                 <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-amber-500 text-black font-bold animate-pulse">
@@ -535,7 +746,7 @@ export const AdminDashboard: React.FC = () => {
               }`}
             >
               <Sliders className="w-4 h-4" />
-              <span>8. Payment Settings</span>
+              <span>9. Payment Settings</span>
             </button>
 
             <button
@@ -545,7 +756,7 @@ export const AdminDashboard: React.FC = () => {
               }`}
             >
               <Megaphone className="w-4 h-4" />
-              <span>9. Advertisement Mgr</span>
+              <span>10. Advertisement Mgr</span>
             </button>
 
             <button
@@ -555,7 +766,7 @@ export const AdminDashboard: React.FC = () => {
               }`}
             >
               <Settings className="w-4 h-4" />
-              <span>10. Website Settings</span>
+              <span>11. Website Settings</span>
             </button>
 
             <button
@@ -565,7 +776,7 @@ export const AdminDashboard: React.FC = () => {
               }`}
             >
               <Bell className="w-4 h-4" />
-              <span>11. Notifications</span>
+              <span>12. Notifications</span>
             </button>
 
             <button
@@ -575,16 +786,43 @@ export const AdminDashboard: React.FC = () => {
               }`}
             >
               <BarChart3 className="w-4 h-4" />
-              <span>12. Analytics Reports</span>
+              <span>13. Analytics Reports</span>
             </button>
           </nav>
         </div>
 
         {/* Bottom Actions */}
         <div className="pt-4 border-t border-slate-800/80 space-y-2 text-xs">
+          {/* Hidden JSON file input for DB restore */}
+          <input
+            type="file"
+            ref={restoreFileRef}
+            onChange={handleRestoreBackupFile}
+            accept=".json"
+            className="hidden"
+          />
+
+          <button
+            onClick={handleDownloadBackup}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-950/50 border border-emerald-500/30 hover:bg-emerald-900/60 text-emerald-300 font-semibold transition-colors cursor-pointer"
+            title="Download complete database JSON backup"
+          >
+            <DownloadCloud className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>Download DB Backup</span>
+          </button>
+
+          <button
+            onClick={() => restoreFileRef.current?.click()}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium transition-colors cursor-pointer"
+            title="Restore database state from JSON backup file"
+          >
+            <UploadCloud className="w-4 h-4 text-indigo-400 shrink-0" />
+            <span>Restore DB from JSON</span>
+          </button>
+
           <button
             onClick={() => setFirebaseGuideOpen(true)}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-amber-300 font-semibold transition-colors cursor-pointer"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900/60 hover:bg-slate-800 text-amber-300 font-medium transition-colors cursor-pointer"
           >
             <Database className="w-4 h-4" />
             <span>Firebase & Sync Guide</span>
@@ -823,6 +1061,17 @@ export const AdminDashboard: React.FC = () => {
                 </button>
 
                 <button
+                  onClick={() => setActiveTab('packages')}
+                  className="w-full py-2.5 px-3 rounded-xl bg-purple-950/60 hover:bg-purple-900/70 border border-purple-500/40 text-xs font-semibold text-purple-200 flex items-center justify-between cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-purple-400" />
+                    <span>Manage Packages & Set Pricing (৳)</span>
+                  </span>
+                  <ArrowUpRight className="w-4 h-4 text-slate-500" />
+                </button>
+
+                <button
                   onClick={() => setActiveTab('payment-settings')}
                   className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-200 flex items-center justify-between cursor-pointer"
                 >
@@ -837,7 +1086,222 @@ export const AdminDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* 2 & 3. MANAGE SIMPLE / PREMIUM METHODS */}
+        {/* 2. MANAGE PACKAGES & PRICING (৳ BDT) */}
+        {activeTab === 'packages' && (
+          <div className="space-y-6">
+            {/* Header with Title and Actions */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0b0e18] border border-slate-800 p-6 rounded-2xl">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Tag className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-lg font-bold text-white">
+                    Premium Packages & Pricing (৳ BDT)
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                  Here you can set and control all VIP membership packages. Configure 7 Days, 30 Days, 90 Days, 365 Days or any custom duration with your own price in Taka (৳). Users will see these exact packages and submit bKash/Nagad payments based on these prices.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5">
+                {packagesList.length === 0 && (
+                  <button
+                    onClick={handleGenerateDefaultPackageTiers}
+                    className="px-4 py-2.5 rounded-xl bg-purple-950/70 border border-purple-500/40 hover:bg-purple-900/70 text-purple-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    <span>Generate 7, 30, 90, 365 Days Template</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => {
+                    setEditingPackage({
+                      name: '',
+                      durationDays: 30,
+                      priceBDT: 500,
+                      description: '',
+                      benefits: [
+                        'Full Access to All VIP Methods',
+                        'Stream All Masterclasses in 1080p',
+                        'Direct Fast High-Speed Downloads',
+                        'Zero Advertisements Guaranteed',
+                        'Priority Admin WhatsApp / Telegram Support'
+                      ],
+                      isActive: true,
+                      isPopular: false
+                    });
+                    setNewBenefitText('');
+                    setPackageModalOpen(true);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-purple-600/30 transition-all cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Create New Package</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Packages Grid / List */}
+            {packagesList.length === 0 ? (
+              <div className="p-12 text-center rounded-2xl bg-[#0b0e18] border border-slate-800">
+                <Tag className="w-12 h-12 text-purple-400/50 mx-auto mb-3" />
+                <h4 className="text-base font-bold text-white mb-1">No Packages Configured Yet</h4>
+                <p className="text-xs text-slate-400 max-w-md mx-auto mb-6">
+                  Demo prices have been removed. Click "+ Create New Package" to set your first membership tier with your custom duration and price in Taka (৳), or click "Generate Template" to start with standard 7, 30, 90, 365 days slots.
+                </p>
+                <div className="flex justify-center gap-3 flex-wrap">
+                  <button
+                    onClick={handleGenerateDefaultPackageTiers}
+                    className="px-5 py-2.5 rounded-xl bg-purple-950 border border-purple-500/40 hover:bg-purple-900 text-purple-300 text-xs font-semibold flex items-center gap-2 cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    <span>Quick Load 7, 30, 90, 365 Days Slots</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingPackage({
+                        name: '',
+                        durationDays: 7,
+                        priceBDT: 250,
+                        description: '',
+                        benefits: ['Full Access to All VIP Methods', 'Zero Ads Guaranteed', 'Direct Downloads'],
+                        isActive: true,
+                        isPopular: false
+                      });
+                      setNewBenefitText('');
+                      setPackageModalOpen(true);
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center gap-2 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Create Custom Package</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {packagesList.map(pkg => (
+                  <div
+                    key={pkg.id}
+                    className={`relative rounded-2xl p-6 bg-[#0b0e18] border flex flex-col justify-between transition-all ${
+                      pkg.isPopular ? 'border-purple-500 shadow-xl shadow-purple-950/40' : 'border-slate-800'
+                    }`}
+                  >
+                    {pkg.isPopular && (
+                      <span className="absolute -top-3 left-4 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-bold uppercase tracking-wider shadow">
+                        Most Popular
+                      </span>
+                    )}
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                          pkg.isActive ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30' : 'bg-rose-950 text-rose-400 border border-rose-500/30'
+                        }`}>
+                          {pkg.isActive ? 'Active on Public Site' : 'Hidden / Inactive'}
+                        </span>
+                        <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300">
+                          {pkg.durationDays} Days
+                        </span>
+                      </div>
+
+                      <h4 className="text-lg font-bold text-white mb-1">{pkg.name}</h4>
+                      <p className="text-xs text-slate-400 mb-4 min-h-[32px] line-clamp-2">{pkg.description || 'No description provided.'}</p>
+
+                      {/* Price BDT Badge */}
+                      <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 mb-4">
+                        <div className="text-[10px] uppercase font-semibold text-slate-400">Price in BDT</div>
+                        <div className="text-2xl font-black font-mono text-purple-400 tabular-nums">
+                          ৳{pkg.priceBDT} <span className="text-xs font-normal text-slate-400">BDT</span>
+                        </div>
+                      </div>
+
+                      {/* Benefits preview */}
+                      <div className="space-y-1.5 mb-6 text-xs text-slate-300">
+                        <div className="text-[11px] font-semibold text-slate-400 mb-1 flex items-center justify-between">
+                          <span>Included Features:</span>
+                          <span className="text-[10px] text-purple-400 font-mono">{pkg.benefits.length} items</span>
+                        </div>
+                        {pkg.benefits.slice(0, 4).map((b, idx) => (
+                          <div key={idx} className="flex items-start gap-1.5 text-[11px] text-slate-300">
+                            <Check className="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5" />
+                            <span className="truncate">{b}</span>
+                          </div>
+                        ))}
+                        {pkg.benefits.length > 4 && (
+                          <div className="text-[10px] text-slate-500 italic pl-5">
+                            +{pkg.benefits.length - 4} more benefits...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="pt-4 border-t border-slate-800/80 flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingPackage({ ...pkg });
+                          setNewBenefitText('');
+                          setPackageModalOpen(true);
+                        }}
+                        className="flex-1 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>Edit Price & Info</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleDeletePackage(pkg.id)}
+                        className="p-2 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300 transition-colors cursor-pointer"
+                        title="Delete Package"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Database Persistence & Backup Card */}
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-[#0c1020] to-[#070a14] border border-indigo-500/20 shadow-xl">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Database className="w-5 h-5 text-indigo-400" />
+                    <h4 className="text-sm font-bold text-white">
+                      Permanent Data Persistence & 1-Click Backups
+                    </h4>
+                  </div>
+                  <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                    All created methods, courses, registered members, packages, and payment records are automatically written to <code className="text-purple-300 font-mono">server_db/data.json</code> on disk. You can download an offline JSON backup anytime or restore it to guarantee 100% data safety.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0 flex-wrap">
+                  <button
+                    onClick={handleDownloadBackup}
+                    className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-emerald-600/20 transition-all cursor-pointer"
+                  >
+                    <DownloadCloud className="w-4 h-4" />
+                    <span>Download JSON Backup</span>
+                  </button>
+
+                  <button
+                    onClick={() => restoreFileRef.current?.click()}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
+                  >
+                    <UploadCloud className="w-4 h-4 text-indigo-400" />
+                    <span>Restore from JSON</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 3 & 4. MANAGE SIMPLE / PREMIUM METHODS */}
         {(activeTab === 'simple-methods' || activeTab === 'premium-methods') && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -2113,6 +2577,214 @@ service cloud.firestore {
             >
               Done Reading
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CREATE / EDIT MEMBERSHIP PACKAGE */}
+      {packageModalOpen && editingPackage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="relative max-w-lg w-full bg-[#0f1422] border border-slate-800 rounded-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => {
+                setPackageModalOpen(false);
+                setEditingPackage(null);
+                setNewBenefitText('');
+              }}
+              className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-2">
+              <Tag className="w-5 h-5 text-purple-400" />
+              <h3 className="text-lg font-bold text-white">
+                {editingPackage.id ? 'Edit Membership Package' : 'Create New Membership Package'}
+              </h3>
+            </div>
+            <p className="text-xs text-slate-400 mb-6">
+              Set package title, membership duration, and price in BDT (৳).
+            </p>
+
+            <form onSubmit={handleSavePackage} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Package Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 7 Days Trial Pass, 30 Days Monthly Pass, 365 Days VIP Pass"
+                  value={editingPackage.name || ''}
+                  onChange={(e) => setEditingPackage({ ...editingPackage, name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-slate-100 text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Duration (in Days) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    max={3650}
+                    placeholder="e.g. 7, 30, 90, 365"
+                    value={editingPackage.durationDays || ''}
+                    onChange={(e) => setEditingPackage({ ...editingPackage, durationDays: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-slate-100 text-xs font-mono focus:outline-none focus:border-purple-500"
+                  />
+                  <div className="text-[10px] text-slate-500 mt-1">E.g. 7, 30, 90, 365</div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Price in BDT (৳ Taka) *
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-xs font-bold text-purple-400">৳</span>
+                    <input
+                      type="number"
+                      required
+                      min={0}
+                      placeholder="e.g. 300, 850, 2200"
+                      value={editingPackage.priceBDT || ''}
+                      onChange={(e) => setEditingPackage({ ...editingPackage, priceBDT: Number(e.target.value) })}
+                      className="w-full pl-7 pr-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-slate-100 text-xs font-mono font-bold focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+                  <div className="text-[10px] text-slate-500 mt-1">Amount user pays via bKash/Nagad</div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Short summary of this membership pass..."
+                  value={editingPackage.description || ''}
+                  onChange={(e) => setEditingPackage({ ...editingPackage, description: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-900 border border-slate-800 rounded-xl text-slate-100 text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500 resize-none"
+                />
+              </div>
+
+              {/* Benefits list builder */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Package Benefits & Perks (shown with checkmarks)
+                </label>
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. Full Access to All VIP Methods"
+                    value={newBenefitText}
+                    onChange={(e) => setNewBenefitText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (newBenefitText.trim()) {
+                          const current = editingPackage.benefits || [];
+                          setEditingPackage({
+                            ...editingPackage,
+                            benefits: [...current, newBenefitText.trim()]
+                          });
+                          setNewBenefitText('');
+                        }
+                      }
+                    }}
+                    className="flex-1 px-3.5 py-2 bg-slate-900 border border-slate-800 rounded-xl text-slate-100 text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newBenefitText.trim()) {
+                        const current = editingPackage.benefits || [];
+                        setEditingPackage({
+                          ...editingPackage,
+                          benefits: [...current, newBenefitText.trim()]
+                        });
+                        setNewBenefitText('');
+                      }
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold cursor-pointer"
+                  >
+                    + Add
+                  </button>
+                </div>
+
+                <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                  {(editingPackage.benefits || []).map((b, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2 rounded-lg bg-slate-900/90 border border-slate-800 text-xs text-slate-200"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                        <span className="text-[11px]">{b}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = (editingPackage.benefits || []).filter((_, i) => i !== idx);
+                          setEditingPackage({ ...editingPackage, benefits: updated });
+                        }}
+                        className="text-slate-500 hover:text-rose-400 p-0.5"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Toggles */}
+              <div className="pt-2 grid grid-cols-2 gap-4 border-t border-slate-800">
+                <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editingPackage.isActive !== false}
+                    onChange={(e) => setEditingPackage({ ...editingPackage, isActive: e.target.checked })}
+                    className="rounded border-slate-700 text-purple-600 focus:ring-0 w-4 h-4"
+                  />
+                  <span>Active & Visible to Public</span>
+                </label>
+
+                <label className="flex items-center gap-2 text-xs text-purple-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(editingPackage.isPopular)}
+                    onChange={(e) => setEditingPackage({ ...editingPackage, isPopular: e.target.checked })}
+                    className="rounded border-slate-700 text-purple-600 focus:ring-0 w-4 h-4"
+                  />
+                  <span>Highlight as "Most Popular"</span>
+                </label>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPackageModalOpen(false);
+                    setEditingPackage(null);
+                    setNewBenefitText('');
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-xs text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs shadow-lg shadow-purple-600/30 cursor-pointer"
+                >
+                  {editingPackage.id ? 'Save Changes' : 'Publish Package'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

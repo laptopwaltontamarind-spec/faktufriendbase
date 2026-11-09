@@ -45,17 +45,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  // Quick fill demo helper
-  const handleQuickFill = (type: 'simple' | 'premium') => {
-    if (type === 'simple') {
-      setEmail('user@example.com');
-      setPassword('user123456');
-    } else {
-      setEmail('premium@example.com');
-      setPassword('premium123456');
-    }
-  };
-
   return (
     <div className="w-full min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full bg-[#0f1422] border border-slate-800 rounded-2xl p-8 shadow-2xl relative">
@@ -71,30 +60,6 @@ export const LoginPage: React.FC = () => {
         <p className="text-slate-400 text-xs text-center mb-6">
           Sign in to access your dashboard, saved methods, and courses.
         </p>
-
-        {/* Demo Credentials Quick Switcher */}
-        <div className="mb-6 p-3 bg-slate-900/90 border border-slate-800 rounded-xl text-xs space-y-2">
-          <div className="flex items-center justify-between text-slate-400 font-semibold">
-            <span>One-Click Demo Fill:</span>
-            <span className="text-[10px] text-purple-400">Instant Test</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickFill('simple')}
-              className="py-1.5 px-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium transition-colors cursor-pointer text-center"
-            >
-              Simple User (Free)
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickFill('premium')}
-              className="py-1.5 px-2 rounded bg-purple-950/70 border border-purple-500/30 hover:bg-purple-900/60 text-purple-300 text-[11px] font-medium transition-colors cursor-pointer text-center"
-            >
-              VIP User (Premium)
-            </button>
-          </div>
-        </div>
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">

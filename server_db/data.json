@@ -1,0 +1,45 @@
+{
+  "settings": {
+    "websiteName": "Method Tricks",
+    "logoText": "MethodTricks",
+    "logoSubtitle": "Learning Platform",
+    "faviconUrl": "",
+    "description": "Master practical digital skills, exclusive modern methods, tricks, and comprehensive courses with tiered access.",
+    "heroHeadline": "Unlock Modern Methods & Master Real-World Digital Skills",
+    "heroSubheadline": "Explore tested digital strategies, step-by-step methods, and hands-on courses curated for creators, tech enthusiasts, and digital entrepreneurs.",
+    "bannerImageUrl": "/src/assets/images/hero_method_tricks_tech_1794218786220.jpg",
+    "contactEmail": "support@methodtricks.com",
+    "contactPhone": "+880 1711-000000",
+    "contactAddress": "Dhaka, Bangladesh",
+    "telegramChannel": "https://t.me/methodtricks_bd",
+    "facebookPage": "https://facebook.com/methodtricksofficial",
+    "youtubeChannel": "https://youtube.com/@methodtricks",
+    "bKashNumber": "01711-223344",
+    "bKashType": "Personal",
+    "bKashInstructions": "Go to your bKash app -> Send Money to our Personal Number -> Copy the Transaction ID (TrxID) and take a clear screenshot of the confirmation message.",
+    "nagadNumber": "01811-556677",
+    "nagadType": "Personal",
+    "nagadInstructions": "Go to your Nagad app -> Send Money to our Personal Number -> Copy the Transaction ID (TrxID) and take a screenshot of the successful transaction.",
+    "termsAndConditions": "Welcome to Method Tricks. All content is for educational purposes. Premium accounts may not be shared or resold. Violations result in instant suspension without refund.",
+    "privacyPolicy": "We respect your privacy. User phone numbers and payment records are kept strictly confidential and used solely for membership verification.",
+    "aboutText": "Method Tricks is an educational platform dedicated to delivering practical digital methods, technology tricks, and masterclass courses for learners of all levels."
+  },
+  "users": [
+    {
+      "id": "usr_admin",
+      "name": "Shykot Admin",
+      "email": "adminSHYKOT@gmail.com",
+      "phone": "01700-000000",
+      "role": "admin",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "status": "active",
+      "passwordHash": "1b21c57022de4b7f483c5ee53502f5bebecbbd0579910647d2c25a8ace4648ce"
+    }
+  ],
+  "packages": [],
+  "methods": [],
+  "courses": [],
+  "payments": [],
+  "advertisements": [],
+  "notifications": []
+}

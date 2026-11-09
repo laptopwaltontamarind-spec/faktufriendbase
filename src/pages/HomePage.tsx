@@ -419,54 +419,70 @@ export const HomePage: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {packages.map(pkg => (
-            <div
-              key={pkg.id}
-              className={`relative bg-[#0f1422] rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 ${
-                pkg.isPopular
-                  ? 'border-2 border-purple-500 shadow-2xl shadow-purple-950/50'
-                  : 'border border-slate-800 hover:border-slate-700'
-              }`}
+        {packages.length === 0 ? (
+          <div className="bg-[#0f1422] border border-slate-800 rounded-2xl p-10 text-center max-w-lg mx-auto">
+            <Crown className="w-10 h-10 text-purple-400/50 mx-auto mb-3" />
+            <h4 className="text-base font-bold text-white mb-1.5">VIP Packages Updating</h4>
+            <p className="text-slate-400 text-xs leading-relaxed mb-4">
+              Membership pricing will be announced shortly by the administrator. Contact our support channels for instant VIP pass inquiries.
+            </p>
+            <button
+              onClick={() => setCurrentPage('contact')}
+              className="px-5 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/30 text-purple-300 text-xs font-semibold cursor-pointer"
             >
-              {pkg.isPopular && (
-                <div className="absolute -top-3.5 inset-x-0 mx-auto w-fit px-3 py-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[11px] font-bold rounded-full uppercase tracking-wider shadow">
-                  Most Popular
-                </div>
-              )}
-
-              <div>
-                <h3 className="text-lg font-bold text-white mb-1">{pkg.name}</h3>
-                <p className="text-xs text-slate-400 mb-4">{pkg.description}</p>
-                <div className="flex items-baseline gap-1 text-white mb-6">
-                  <span className="text-3xl sm:text-4xl font-extrabold font-mono tabular-nums">৳{pkg.priceBDT}</span>
-                  <span className="text-xs text-slate-400">/ {pkg.durationDays} Days</span>
-                </div>
-
-                <div className="space-y-2.5 text-xs text-slate-300 mb-6">
-                  {pkg.benefits.map((b, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-                      <span>{b}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                onClick={() => handleSelectPackage(pkg)}
-                className={`w-full py-3 rounded-xl font-semibold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              Contact Support
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {packages.map(pkg => (
+              <div
+                key={pkg.id}
+                className={`relative bg-[#0f1422] rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 ${
                   pkg.isPopular
-                    ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/30'
-                    : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                    ? 'border-2 border-purple-500 shadow-2xl shadow-purple-950/50'
+                    : 'border border-slate-800 hover:border-slate-700'
                 }`}
               >
-                <span>Select Package</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-        </div>
+                {pkg.isPopular && (
+                  <div className="absolute -top-3.5 inset-x-0 mx-auto w-fit px-3 py-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[11px] font-bold rounded-full uppercase tracking-wider shadow">
+                    Most Popular
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">{pkg.name}</h3>
+                  <p className="text-xs text-slate-400 mb-4">{pkg.description}</p>
+                  <div className="flex items-baseline gap-1 text-white mb-6">
+                    <span className="text-3xl sm:text-4xl font-extrabold font-mono tabular-nums">৳{pkg.priceBDT}</span>
+                    <span className="text-xs text-slate-400">/ {pkg.durationDays} Days</span>
+                  </div>
+
+                  <div className="space-y-2.5 text-xs text-slate-300 mb-6">
+                    {pkg.benefits.map((b, idx) => (
+                      <div key={idx} className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                        <span>{b}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => handleSelectPackage(pkg)}
+                  className={`w-full py-3 rounded-xl font-semibold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    pkg.isPopular
+                      ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/30'
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                  }`}
+                >
+                  <span>Select Package</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 6. BKASH & NAGAD PAYMENT PROCESS STEPS */}

@@ -286,16 +286,18 @@ export const PaymentVerificationPage: React.FC = () => {
             <div className="mt-6 pt-5 border-t border-slate-800">
               <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
                 <span>Selected Package:</span>
-                <span className="font-bold text-white">{activePackage?.name}</span>
+                <span className="font-bold text-white">{activePackage?.name || 'No package selected'}</span>
               </div>
               <div className="flex items-center justify-between text-xs text-slate-400 mb-4">
                 <span>Payable Amount:</span>
                 <span className="text-xl font-extrabold font-mono text-purple-400 tabular-nums">
-                  ৳{activePackage?.priceBDT} BDT
+                  ৳{activePackage?.priceBDT ?? 0} BDT
                 </span>
               </div>
               <p className="text-[11px] text-slate-500">
-                Please make sure to send the exact amount of ৳{activePackage?.priceBDT} to avoid verification delays.
+                {activePackage 
+                  ? `Please make sure to send the exact amount of ৳${activePackage.priceBDT} to avoid verification delays.`
+                  : 'Packages are currently being configured by administration.'}
               </p>
             </div>
           </div>
@@ -332,11 +334,15 @@ export const PaymentVerificationPage: React.FC = () => {
                 onChange={(e) => setSelectedPkgId(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-slate-200 text-xs focus:outline-none focus:border-purple-500 cursor-pointer"
               >
-                {packages.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} — ৳{p.priceBDT} ({p.durationDays} Days)
-                  </option>
-                ))}
+                {packages.length === 0 ? (
+                  <option value="">No packages configured yet</option>
+                ) : (
+                  packages.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} — ৳{p.priceBDT} ({p.durationDays} Days)
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 
