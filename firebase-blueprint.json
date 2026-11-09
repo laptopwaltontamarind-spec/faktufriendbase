@@ -1,0 +1,144 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role-based access control",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user ID" },
+        "name": { "type": "string", "description": "Full name of the user" },
+        "email": { "type": "string", "format": "email", "description": "User email address" },
+        "phone": { "type": "string", "description": "User contact phone number" },
+        "role": { "type": "string", "enum": ["simple", "premium", "admin"], "description": "Membership role" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account registration timestamp" },
+        "premiumExpiresAt": { "type": "string", "format": "date-time", "description": "Expiration timestamp for VIP access" },
+        "status": { "type": "string", "enum": ["active", "suspended"], "description": "Account status" }
+      },
+      "required": ["id", "name", "email", "role", "createdAt", "status"]
+    },
+    "Method": {
+      "title": "Method",
+      "description": "Digital trick, strategy or method document",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique method ID" },
+        "title": { "type": "string", "description": "Method title" },
+        "type": { "type": "string", "enum": ["simple", "premium"], "description": "Tier required" },
+        "category": { "type": "string", "description": "Method category" },
+        "description": { "type": "string", "description": "Detailed explanation" },
+        "thumbnailUrl": { "type": "string", "description": "Banner or thumbnail image" },
+        "videoUrl": { "type": "string", "description": "Video stream URL" },
+        "videoSourceType": { "type": "string", "enum": ["direct", "youtube", "drive"], "description": "Player type" },
+        "downloadAllowed": { "type": "boolean", "description": "Whether file download is enabled" },
+        "downloadUrl": { "type": "string", "description": "Asset download URL" },
+        "fileName": { "type": "string", "description": "Downloadable file name" },
+        "fileSize": { "type": "string", "description": "File size label" },
+        "views": { "type": "number", "description": "Total view count" },
+        "likes": { "type": "number", "description": "Total likes" },
+        "isPublished": { "type": "boolean", "description": "Publication status" },
+        "uploadDate": { "type": "string", "format": "date-time", "description": "Upload timestamp" }
+      },
+      "required": ["id", "title", "type", "category", "videoUrl", "downloadAllowed", "isPublished"]
+    },
+    "Course": {
+      "title": "Course",
+      "description": "Comprehensive course curriculum",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique course ID" },
+        "title": { "type": "string", "description": "Course title" },
+        "type": { "type": "string", "enum": ["simple", "premium"], "description": "Tier required" },
+        "category": { "type": "string", "description": "Course category" },
+        "description": { "type": "string", "description": "Course description" },
+        "thumbnailUrl": { "type": "string", "description": "Thumbnail preview image" },
+        "videoUrl": { "type": "string", "description": "Intro overview video" },
+        "downloadAllowed": { "type": "boolean", "description": "Download capability" },
+        "isPublished": { "type": "boolean", "description": "Publication status" },
+        "uploadDate": { "type": "string", "format": "date-time", "description": "Upload timestamp" },
+        "instructor": { "type": "string", "description": "Instructor name" },
+        "totalDuration": { "type": "string", "description": "Estimated total duration" }
+      },
+      "required": ["id", "title", "type", "category", "isPublished"]
+    },
+    "MembershipPackage": {
+      "title": "MembershipPackage",
+      "description": "VIP membership plan with pricing in BDT",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique package ID" },
+        "name": { "type": "string", "description": "Package title e.g. 7 Days, 30 Days Pass" },
+        "priceBDT": { "type": "number", "description": "Cost in Bangladeshi Taka (৳)" },
+        "durationDays": { "type": "number", "description": "Duration in days" },
+        "description": { "type": "string", "description": "Package summary" },
+        "isActive": { "type": "boolean", "description": "Whether package is visible for purchase" },
+        "isPopular": { "type": "boolean", "description": "Whether highlighted as most popular" }
+      },
+      "required": ["id", "name", "priceBDT", "durationDays", "isActive"]
+    },
+    "PaymentSubmission": {
+      "title": "PaymentSubmission",
+      "description": "Manual bKash/Nagad transaction verification submission",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique transaction submission ID" },
+        "userId": { "type": "string", "description": "User account ID" },
+        "userName": { "type": "string", "description": "User full name" },
+        "userEmail": { "type": "string", "format": "email", "description": "User email" },
+        "userPhone": { "type": "string", "description": "User contact phone" },
+        "packageId": { "type": "string", "description": "Requested package ID" },
+        "packageName": { "type": "string", "description": "Name of package" },
+        "packageDays": { "type": "number", "description": "Days duration" },
+        "amountBDT": { "type": "number", "description": "Amount sent in BDT" },
+        "method": { "type": "string", "enum": ["bKash", "Nagad"], "description": "Payment gateway" },
+        "senderNumber": { "type": "string", "description": "Sender mobile banking number" },
+        "transactionId": { "type": "string", "description": "Transaction TrxID" },
+        "screenshotUrl": { "type": "string", "description": "Receipt screenshot image URL" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"], "description": "Verification status" },
+        "rejectionReason": { "type": "string", "description": "Reason if rejected" },
+        "submittedAt": { "type": "string", "format": "date-time", "description": "Submission timestamp" },
+        "reviewedAt": { "type": "string", "format": "date-time", "description": "Review timestamp" },
+        "reviewedBy": { "type": "string", "description": "Admin who reviewed" }
+      },
+      "required": ["id", "userId", "packageId", "amountBDT", "method", "senderNumber", "transactionId", "status", "submittedAt"]
+    },
+    "WebsiteSettings": {
+      "title": "WebsiteSettings",
+      "description": "Global website branding, contact, and payment configuration",
+      "type": "object",
+      "properties": {
+        "websiteName": { "type": "string", "description": "Website title" },
+        "bKashNumber": { "type": "string", "description": "bKash account number" },
+        "nagadNumber": { "type": "string", "description": "Nagad account number" },
+        "contactEmail": { "type": "string", "description": "Support email" },
+        "contactPhone": { "type": "string", "description": "Support phone number" }
+      },
+      "required": ["websiteName", "bKashNumber", "nagadNumber"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User accounts and membership roles"
+    },
+    "/methods/{methodId}": {
+      "schema": { "$ref": "#/entities/Method" },
+      "description": "Simple and VIP premium methods"
+    },
+    "/courses/{courseId}": {
+      "schema": { "$ref": "#/entities/Course" },
+      "description": "Course curriculum masterclasses"
+    },
+    "/packages/{packageId}": {
+      "schema": { "$ref": "#/entities/MembershipPackage" },
+      "description": "Membership packages and BDT pricing"
+    },
+    "/payments/{paymentId}": {
+      "schema": { "$ref": "#/entities/PaymentSubmission" },
+      "description": "bKash and Nagad payment verifications"
+    },
+    "/settings/global": {
+      "schema": { "$ref": "#/entities/WebsiteSettings" },
+      "description": "Global website configuration and payment numbers"
+    }
+  }
+}
