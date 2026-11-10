@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   FileCheck
 } from 'lucide-react';
+import { firebaseSubmitPayment } from '../lib/firebaseService.ts';
 
 export const PaymentVerificationPage: React.FC = () => {
   const { 
@@ -127,15 +128,34 @@ export const PaymentVerificationPage: React.FC = () => {
         })
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        showToast(data.error || 'Submission failed', 'error');
+      if (res.ok) {
+        setSubmittedSuccessfully(true);
+        showToast('Payment submitted! Awaiting Admin verification.', 'success');
         return;
       }
-
-      setSubmittedSuccessfully(true);
-      showToast('Payment submitted! Awaiting Admin verification.', 'success');
     } catch {
+      // Fallback to Firebase directly on Static Site
+    }
+
+    try {
+      await firebaseSubmitPayment({
+        userId: user.id,
+        userName: fullName || user.name,
+        userEmail: user.email,
+        userPhone: senderNumber.trim(),
+        packageId: activePackage.id,
+        packageName: activePackage.name,
+        packageDays: activePackage.durationDays,
+        amountBDT: activePackage.priceBDT,
+        method: paymentMethod,
+        senderNumber: senderNumber.trim(),
+        transactionId: transactionId.trim().toUpperCase(),
+        screenshotUrl: screenshotBase64 || ''
+      });
+      setSubmittedSuccessfully(true);
+      showToast('Payment submitted to Firebase Cloud! Awaiting Admin verification.', 'success');
+    } catch (fbErr) {
+      console.error('Firebase payment submission error', fbErr);
       showToast('Failed to connect to verification server', 'error');
     } finally {
       setSubmitting(false);

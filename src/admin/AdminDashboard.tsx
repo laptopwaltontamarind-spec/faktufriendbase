@@ -48,6 +48,20 @@ import {
   UploadCloud,
   Sparkles
 } from 'lucide-react';
+import { 
+  firebaseGetPackages, 
+  firebaseSavePackage, 
+  firebaseDeletePackage,
+  firebaseGetMethods, 
+  firebaseSaveMethod, 
+  firebaseDeleteMethod,
+  firebaseGetCourses, 
+  firebaseSaveCourse, 
+  firebaseDeleteCourse,
+  firebaseGetPayments, 
+  firebaseUpdatePaymentStatus,
+  firebaseGetUsers 
+} from '../lib/firebaseService.ts';
 
 export const AdminDashboard: React.FC = () => {
   const { user, isAdmin, token, logout } = useAuth();
@@ -126,16 +140,57 @@ export const AdminDashboard: React.FC = () => {
         fetch('/api/packages')
       ]);
 
-      if (anRes.ok) setAnalytics(await anRes.json());
-      if (mRes.ok) setMethods(await mRes.json());
-      if (cRes.ok) setCourses(await cRes.json());
-      if (uRes.ok) setUsersList(await uRes.json());
-      if (pRes.ok) setPaymentsList(await pRes.json());
-      if (adRes.ok) setAdsList(await adRes.json());
-      if (sRes.ok) setAdminSettings(await sRes.json());
-      if (pkgRes.ok) setPackagesList(await pkgRes.json());
-    } catch (err) {
-      console.error('Failed to load admin dataset', err);
+      if (anRes.ok && mRes.ok) {
+        setAnalytics(await anRes.json());
+        setMethods(await mRes.json());
+        setCourses(await cRes.json());
+        setUsersList(await uRes.json());
+        setPaymentsList(await pRes.json());
+        setAdsList(await adRes.json());
+        setAdminSettings(await sRes.json());
+        setPackagesList(await pkgRes.json());
+        return;
+      }
+    } catch {
+      // Fallback to Firebase on Static Site
+    }
+
+    try {
+      const [fbUsers, fbMethods, fbCourses, fbPackages, fbPayments] = await Promise.all([
+        firebaseGetUsers(),
+        firebaseGetMethods(),
+        firebaseGetCourses(),
+        firebaseGetPackages(),
+        firebaseGetPayments()
+      ]);
+      setUsersList(fbUsers);
+      setMethods(fbMethods);
+      setCourses(fbCourses);
+      setPackagesList(fbPackages);
+      setPaymentsList(fbPayments);
+
+      const premiumUsers = fbUsers.filter(u => u.role === 'premium').length;
+      const simpleUsers = fbUsers.filter(u => u.role === 'simple').length;
+      const totalRev = fbPayments.filter(p => p.status === 'approved').reduce((sum, p) => sum + p.amountBDT, 0);
+
+      setAnalytics({
+        totalUsers: fbUsers.length,
+        premiumUsers,
+        simpleUsers,
+        totalRevenueBDT: totalRev,
+        pendingPayments: fbPayments.filter(p => p.status === 'pending').length,
+        approvedPayments: fbPayments.filter(p => p.status === 'approved').length,
+        rejectedPayments: fbPayments.filter(p => p.status === 'rejected').length,
+        totalMethods: fbMethods.length,
+        simpleMethods: fbMethods.filter(m => m.type === 'simple').length,
+        premiumMethods: fbMethods.filter(m => m.type === 'premium').length,
+        totalCourses: fbCourses.length,
+        simpleCourses: fbCourses.filter(c => c.type === 'simple').length,
+        premiumCourses: fbCourses.filter(c => c.type === 'premium').length,
+        conversionRate: fbUsers.length > 0 ? ((premiumUsers / fbUsers.length) * 100).toFixed(1) : '0'
+      });
+    } catch (fbErr) {
+      console.error('Firebase admin data load error', fbErr);
     }
   };
 
@@ -193,12 +248,29 @@ export const AdminDashboard: React.FC = () => {
         setEditingPackage(null);
         setNewBenefitText('');
         loadAdminData();
-      } else {
-        const errData = await res.json();
-        showToast(errData.error || 'Failed to save package', 'error');
+        return;
       }
     } catch {
-      showToast('Network error saving package', 'error');
+      // Fallback to Firebase directly on Static Site
+    }
+
+    try {
+      await firebaseSavePackage({
+        ...editingPackage,
+        priceBDT: Number(editingPackage.priceBDT),
+        durationDays: Number(editingPackage.durationDays),
+        benefits: editingPackage.benefits && editingPackage.benefits.length > 0 
+          ? editingPackage.benefits 
+          : ['All Premium Methods Unlocked', 'Zero Ads Guaranteed', 'Direct High-Speed Downloads']
+      });
+      showToast('Package saved to Firebase Cloud successfully!', 'success');
+      setPackageModalOpen(false);
+      setEditingPackage(null);
+      setNewBenefitText('');
+      loadAdminData();
+    } catch (fbErr) {
+      console.error(fbErr);
+      showToast('Error saving package', 'error');
     }
   };
 
@@ -212,11 +284,18 @@ export const AdminDashboard: React.FC = () => {
       if (res.ok) {
         showToast('Package removed successfully.', 'info');
         loadAdminData();
-      } else {
-        showToast('Failed to delete package', 'error');
+        return;
       }
     } catch {
-      showToast('Network error deleting package', 'error');
+      // Fallback to Firebase directly on Static Site
+    }
+
+    try {
+      await firebaseDeletePackage(id);
+      showToast('Package removed from Firebase.', 'info');
+      loadAdminData();
+    } catch {
+      showToast('Error deleting package', 'error');
     }
   };
 
@@ -363,11 +442,21 @@ export const AdminDashboard: React.FC = () => {
         setMethodModalOpen(false);
         setEditingMethod(null);
         loadAdminData();
-      } else {
-        showToast('Failed to save method', 'error');
+        return;
       }
     } catch {
-      showToast('Network error saving method', 'error');
+      // Fallback to Firebase directly on Static Site
+    }
+
+    try {
+      await firebaseSaveMethod(editingMethod);
+      showToast('Method saved to Firebase Cloud successfully!', 'success');
+      setMethodModalOpen(false);
+      setEditingMethod(null);
+      loadAdminData();
+    } catch (fbErr) {
+      console.error(fbErr);
+      showToast('Failed to save method', 'error');
     }
   };
 
@@ -381,7 +470,16 @@ export const AdminDashboard: React.FC = () => {
       if (res.ok) {
         showToast('Method deleted.', 'info');
         loadAdminData();
+        return;
       }
+    } catch {
+      // Fallback to Firebase directly on Static Site
+    }
+
+    try {
+      await firebaseDeleteMethod(id);
+      showToast('Method removed from Firebase.', 'info');
+      loadAdminData();
     } catch {
       showToast('Failed to delete method', 'error');
     }
@@ -410,11 +508,21 @@ export const AdminDashboard: React.FC = () => {
         setCourseModalOpen(false);
         setEditingCourse(null);
         loadAdminData();
-      } else {
-        showToast('Failed to save course', 'error');
+        return;
       }
     } catch {
-      showToast('Network error saving course', 'error');
+      // Fallback to Firebase directly on Static Site
+    }
+
+    try {
+      await firebaseSaveCourse(editingCourse);
+      showToast('Course saved to Firebase Cloud successfully!', 'success');
+      setCourseModalOpen(false);
+      setEditingCourse(null);
+      loadAdminData();
+    } catch (fbErr) {
+      console.error(fbErr);
+      showToast('Failed to save course', 'error');
     }
   };
 
@@ -428,7 +536,16 @@ export const AdminDashboard: React.FC = () => {
       if (res.ok) {
         showToast('Course deleted.', 'info');
         loadAdminData();
+        return;
       }
+    } catch {
+      // Fallback to Firebase directly on Static Site
+    }
+
+    try {
+      await firebaseDeleteCourse(id);
+      showToast('Course removed from Firebase.', 'info');
+      loadAdminData();
     } catch {
       showToast('Failed to delete course', 'error');
     }
@@ -475,11 +592,20 @@ export const AdminDashboard: React.FC = () => {
         showToast(status === 'approved' ? 'Payment Approved! Premium VIP Activated for user.' : 'Payment Rejected.', status === 'approved' ? 'success' : 'info');
         setRejectionModalPayment(null);
         loadAdminData();
-      } else {
-        showToast('Failed to update payment status', 'error');
+        return;
       }
     } catch {
-      showToast('Network error reviewing payment', 'error');
+      // Fallback to Firebase directly on Static Site
+    }
+
+    try {
+      await firebaseUpdatePaymentStatus(id, status, reason);
+      showToast(status === 'approved' ? 'Payment Approved in Firebase Cloud! VIP Activated.' : 'Payment Rejected in Firebase Cloud.', status === 'approved' ? 'success' : 'info');
+      setRejectionModalPayment(null);
+      loadAdminData();
+    } catch (fbErr) {
+      console.error(fbErr);
+      showToast('Failed to update payment status', 'error');
     }
   };
 

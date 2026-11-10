@@ -8,6 +8,11 @@ import type {
   CourseItem
 } from '../types/index.ts';
 import { useAuth } from './AuthContext.tsx';
+import { 
+  firebaseGetPackages, 
+  firebaseGetMethods, 
+  firebaseGetCourses 
+} from '../lib/firebaseService.ts';
 
 export type AppPage = 
   | 'home' 
@@ -223,9 +228,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (res.ok) {
         const data = await res.json();
         setPackages(data.filter((p: MembershipPackage) => p.isActive));
+        return;
       }
+    } catch {
+      // Fallback to Firebase directly on Static Site
+    }
+    try {
+      const fbPackages = await firebaseGetPackages();
+      setPackages(fbPackages.filter((p: MembershipPackage) => p.isActive));
     } catch (err) {
-      console.error('Error fetching packages', err);
+      console.error('Error fetching packages from Firebase', err);
     }
   };
 
@@ -239,16 +251,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         fetch('/api/courses', { headers })
       ]);
       
-      if (methodsRes.ok) {
+      if (methodsRes.ok && coursesRes.ok) {
         const mData = await methodsRes.json();
-        setMethods(mData);
-      }
-      if (coursesRes.ok) {
         const cData = await coursesRes.json();
+        setMethods(mData);
         setCourses(cData);
+        return;
       }
+    } catch {
+      // Fallback to Firebase directly on Static Site
+    }
+    try {
+      const [fbMethods, fbCourses] = await Promise.all([
+        firebaseGetMethods(),
+        firebaseGetCourses()
+      ]);
+      setMethods(fbMethods);
+      setCourses(fbCourses);
     } catch (err) {
-      console.error('Error fetching content', err);
+      console.error('Error fetching content from Firebase', err);
     }
   };
 

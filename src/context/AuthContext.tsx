@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { User, PaymentSubmission } from '../types/index.ts';
+import type { User } from '../types/index.ts';
+import { 
+  firebaseRegisterUser, 
+  firebaseLoginUser, 
+  firebaseAdminLogin 
+} from '../lib/firebaseService.ts';
 
 interface AuthContextType {
   user: User | null;
@@ -19,7 +24,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const saved = localStorage.getItem('mt_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('mt_token'));
   const [loading, setLoading] = useState(true);
 
@@ -31,14 +43,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
-      } else {
-        // Token invalid or expired
-        localStorage.removeItem('mt_token');
-        setToken(null);
-        setUser(null);
+        localStorage.setItem('mt_user', JSON.stringify(data.user));
       }
-    } catch (err) {
-      console.error('Failed to fetch user', err);
+    } catch {
+      // In static site mode, maintain persistent local session
+      console.log('Static site mode active: maintaining client session');
     } finally {
       setLoading(false);
     }
@@ -59,17 +68,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass })
       });
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || 'Login failed' };
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        setToken(data.token);
+        localStorage.setItem('mt_token', data.token);
+        localStorage.setItem('mt_user', JSON.stringify(data.user));
+        return { success: true };
       }
-      setUser(data.user);
-      setToken(data.token);
-      localStorage.setItem('mt_token', data.token);
-      return { success: true };
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 400 || res.status === 401) {
+        return { success: false, error: data.error || 'Invalid email or password' };
+      }
     } catch {
-      return { success: false, error: 'Network error connecting to server' };
+      // Fallback to Firebase directly on Static Site
     }
+
+    // Direct Firebase Cloud fallback
+    const fbRes = await firebaseLoginUser(email, pass);
+    if (fbRes.success && fbRes.user) {
+      const clientToken = 'fb_tok_' + Date.now();
+      setUser(fbRes.user);
+      setToken(clientToken);
+      localStorage.setItem('mt_token', clientToken);
+      localStorage.setItem('mt_user', JSON.stringify(fbRes.user));
+      return { success: true };
+    }
+    return { success: false, error: fbRes.error || 'Login failed' };
   };
 
   const adminLogin = async (email: string, pass: string) => {
@@ -79,17 +104,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass })
       });
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || 'Admin login failed' };
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        setToken(data.token);
+        localStorage.setItem('mt_token', data.token);
+        localStorage.setItem('mt_user', JSON.stringify(data.user));
+        return { success: true };
       }
-      setUser(data.user);
-      setToken(data.token);
-      localStorage.setItem('mt_token', data.token);
-      return { success: true };
     } catch {
-      return { success: false, error: 'Network error connecting to server' };
+      // Fallback to Firebase direct on Static Site
     }
+
+    const fbRes = await firebaseAdminLogin(email, pass);
+    if (fbRes.success && fbRes.user) {
+      const clientToken = 'fb_admin_' + Date.now();
+      setUser(fbRes.user);
+      setToken(clientToken);
+      localStorage.setItem('mt_token', clientToken);
+      localStorage.setItem('mt_user', JSON.stringify(fbRes.user));
+      return { success: true };
+    }
+    return { success: false, error: fbRes.error || 'Invalid admin credentials.' };
   };
 
   const register = async (name: string, email: string, phone: string, pass: string) => {
@@ -99,21 +135,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, phone, password: pass })
       });
-      const data = await res.json();
-      if (!res.ok) {
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        setToken(data.token);
+        localStorage.setItem('mt_token', data.token);
+        localStorage.setItem('mt_user', JSON.stringify(data.user));
+        return { success: true };
+      }
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 400) {
         return { success: false, error: data.error || 'Registration failed' };
       }
-      setUser(data.user);
-      setToken(data.token);
-      localStorage.setItem('mt_token', data.token);
-      return { success: true };
     } catch {
-      return { success: false, error: 'Network error during registration' };
+      // Fallback to Firebase directly on Static Site
     }
+
+    // Direct Firebase Cloud registration
+    const fbRes = await firebaseRegisterUser(name, email, phone, pass);
+    if (fbRes.success && fbRes.user) {
+      const clientToken = 'fb_tok_' + Date.now();
+      setUser(fbRes.user);
+      setToken(clientToken);
+      localStorage.setItem('mt_token', clientToken);
+      localStorage.setItem('mt_user', JSON.stringify(fbRes.user));
+      return { success: true };
+    }
+    return { success: false, error: fbRes.error || 'Registration failed' };
   };
 
   const logout = () => {
     localStorage.removeItem('mt_token');
+    localStorage.removeItem('mt_user');
     setToken(null);
     setUser(null);
   };
@@ -140,8 +193,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false, error: resData.error || 'Update failed' };
       }
       setUser(resData.user);
+      localStorage.setItem('mt_user', JSON.stringify(resData.user));
       return { success: true };
     } catch {
+      if (user) {
+        const updated = { ...user, name: data.name || user.name, phone: data.phone || user.phone };
+        setUser(updated);
+        localStorage.setItem('mt_user', JSON.stringify(updated));
+        return { success: true };
+      }
       return { success: false, error: 'Network error during profile update' };
     }
   };
