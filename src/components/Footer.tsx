@@ -143,6 +143,18 @@ export const Footer: React.FC = () => {
                   Privacy Policy
                 </button>
               </li>
+              <li className="pt-2 border-t border-slate-800/60">
+                <button 
+                  onClick={() => {
+                    window.location.hash = 'admin';
+                    navigateTo('admin-login');
+                  }}
+                  className="hover:text-indigo-400 text-slate-500 transition-colors cursor-pointer text-left flex items-center gap-1.5"
+                >
+                  <Lock className="w-3 h-3 text-slate-500" />
+                  <span>Admin Portal</span>
+                </button>
+              </li>
             </ul>
           </div>
         </div>

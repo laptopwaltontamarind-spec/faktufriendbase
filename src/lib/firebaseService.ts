@@ -14,7 +14,8 @@ import type {
   CourseItem, 
   MembershipPackage, 
   PaymentSubmission, 
-  WebsiteSettings 
+  WebsiteSettings,
+  Advertisement 
 } from '../types/index.ts';
 
 // Simple deterministic hash for password check in client
@@ -343,3 +344,89 @@ export async function firebaseGetUsers(): Promise<User[]> {
     return [];
   }
 }
+
+// --- WEBSITE SETTINGS ---
+
+export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
+  websiteName: 'Method Tricks',
+  logoText: 'Method Tricks',
+  logoSubtitle: 'Learning Platform',
+  faviconUrl: '',
+  description: 'Master practical digital skills, exclusive modern methods, tricks, and comprehensive courses with tiered access.',
+  heroHeadline: 'Unlock Modern Methods & Master Real-World Digital Skills',
+  heroSubheadline: 'Explore tested digital strategies, step-by-step methods, and hands-on courses curated for creators, tech enthusiasts, and digital entrepreneurs.',
+  bannerImageUrl: '/src/assets/images/hero_method_tricks_tech_1794218786220.jpg',
+  contactEmail: 'support@methodtricks.com',
+  contactPhone: '+880 1711-000000',
+  contactAddress: 'Dhaka, Bangladesh',
+  telegramChannel: 'https://t.me/methodtricks_bd',
+  facebookPage: 'https://facebook.com/methodtricksofficial',
+  youtubeChannel: 'https://youtube.com/@methodtricks',
+  bKashNumber: '01711-223344',
+  bKashType: 'Personal',
+  bKashInstructions: 'Go to your bKash app -> Send Money to our Personal Number -> Copy the Transaction ID (TrxID) and take a clear screenshot of the confirmation message.',
+  nagadNumber: '01811-556677',
+  nagadType: 'Personal',
+  nagadInstructions: 'Go to your Nagad app -> Send Money to our Personal Number -> Copy the Transaction ID (TrxID) and take a screenshot of the successful transaction.',
+  termsAndConditions: 'Welcome to Method Tricks. All content is for educational purposes. Premium accounts may not be shared or resold. Violations result in instant suspension without refund.',
+  privacyPolicy: 'We respect your privacy. User phone numbers and payment records are kept strictly confidential and used solely for membership verification.',
+  aboutText: 'Method Tricks is an educational platform dedicated to delivering practical digital methods, technology tricks, and masterclass courses for learners of all levels.'
+};
+
+export async function firebaseGetSettings(): Promise<WebsiteSettings> {
+  try {
+    const docRef = doc(db, 'settings', 'global');
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return { ...DEFAULT_WEBSITE_SETTINGS, ...(snap.data() as WebsiteSettings) };
+    }
+    // Auto-seed default settings on first access
+    await setDoc(docRef, DEFAULT_WEBSITE_SETTINGS);
+    return DEFAULT_WEBSITE_SETTINGS;
+  } catch (err) {
+    console.error('Firebase get settings error', err);
+    return DEFAULT_WEBSITE_SETTINGS;
+  }
+}
+
+export async function firebaseSaveSettings(settings: Partial<WebsiteSettings>): Promise<WebsiteSettings> {
+  const current = await firebaseGetSettings();
+  const updated: WebsiteSettings = { ...current, ...settings };
+  await setDoc(doc(db, 'settings', 'global'), updated);
+  return updated;
+}
+
+// --- ADS ---
+
+export async function firebaseGetAds(): Promise<Advertisement[]> {
+  try {
+    const snap = await getDocs(collection(db, 'advertisements'));
+    const list: Advertisement[] = [];
+    snap.forEach(d => list.push(d.data() as Advertisement));
+    return list;
+  } catch (err) {
+    console.error('Firebase get ads error', err);
+    return [];
+  }
+}
+
+export async function firebaseSaveAd(ad: Partial<Advertisement>): Promise<Advertisement> {
+  const id = ad.id || 'ad_' + Date.now().toString(36);
+  const fullAd: Advertisement = {
+    id,
+    title: ad.title || 'Special Promotion',
+    imageUrl: ad.imageUrl || '/src/assets/images/hero_method_tricks_tech_1794218786220.jpg',
+    targetUrl: ad.targetUrl || 'https://t.me/methodtricks_bd',
+    placement: ad.placement || 'home_top',
+    isEnabled: ad.isEnabled !== false,
+    displayOrder: ad.displayOrder || 1,
+    clicks: ad.clicks || 0
+  };
+  await setDoc(doc(db, 'advertisements', id), fullAd);
+  return fullAd;
+}
+
+export async function firebaseDeleteAd(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'advertisements', id));
+}
+

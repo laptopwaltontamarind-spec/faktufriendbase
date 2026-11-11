@@ -60,8 +60,32 @@ import {
   firebaseDeleteCourse,
   firebaseGetPayments, 
   firebaseUpdatePaymentStatus,
-  firebaseGetUsers 
+  firebaseGetUsers,
+  firebaseGetSettings,
+  firebaseSaveSettings,
+  firebaseGetAds,
+  firebaseSaveAd,
+  firebaseDeleteAd,
+  DEFAULT_WEBSITE_SETTINGS
 } from '../lib/firebaseService.ts';
+
+const defaultAnalytics = {
+  totalUsers: 0,
+  premiumUsers: 0,
+  simpleUsers: 0,
+  totalRevenueBDT: 0,
+  pendingPayments: 0,
+  approvedPayments: 0,
+  rejectedPayments: 0,
+  totalMethods: 0,
+  simpleMethods: 0,
+  premiumMethods: 0,
+  totalCourses: 0,
+  simpleCourses: 0,
+  premiumCourses: 0,
+  totalMethodViews: 0,
+  conversionRate: '0'
+};
 
 export const AdminDashboard: React.FC = () => {
   const { user, isAdmin, token, logout } = useAuth();
@@ -85,14 +109,14 @@ export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
 
   // Server data states
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<any>(defaultAnalytics);
   const [methods, setMethods] = useState<MethodItem[]>([]);
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [packagesList, setPackagesList] = useState<MembershipPackage[]>([]);
   const [usersList, setUsersList] = useState<User[]>([]);
   const [paymentsList, setPaymentsList] = useState<PaymentSubmission[]>([]);
   const [adsList, setAdsList] = useState<Advertisement[]>([]);
-  const [adminSettings, setAdminSettings] = useState<WebsiteSettings | null>(null);
+  const [adminSettings, setAdminSettings] = useState<WebsiteSettings>(DEFAULT_WEBSITE_SETTINGS);
 
   // Modals
   const [packageModalOpen, setPackageModalOpen] = useState(false);
@@ -156,22 +180,27 @@ export const AdminDashboard: React.FC = () => {
     }
 
     try {
-      const [fbUsers, fbMethods, fbCourses, fbPackages, fbPayments] = await Promise.all([
+      const [fbUsers, fbMethods, fbCourses, fbPackages, fbPayments, fbSettings, fbAds] = await Promise.all([
         firebaseGetUsers(),
         firebaseGetMethods(),
         firebaseGetCourses(),
         firebaseGetPackages(),
-        firebaseGetPayments()
+        firebaseGetPayments(),
+        firebaseGetSettings(),
+        firebaseGetAds()
       ]);
       setUsersList(fbUsers);
       setMethods(fbMethods);
       setCourses(fbCourses);
       setPackagesList(fbPackages);
       setPaymentsList(fbPayments);
+      if (fbSettings) setAdminSettings(fbSettings);
+      if (fbAds) setAdsList(fbAds);
 
       const premiumUsers = fbUsers.filter(u => u.role === 'premium').length;
       const simpleUsers = fbUsers.filter(u => u.role === 'simple').length;
       const totalRev = fbPayments.filter(p => p.status === 'approved').reduce((sum, p) => sum + p.amountBDT, 0);
+      const totalViews = fbMethods.reduce((sum, m) => sum + (m.views || 0), 0);
 
       setAnalytics({
         totalUsers: fbUsers.length,
@@ -187,6 +216,7 @@ export const AdminDashboard: React.FC = () => {
         totalCourses: fbCourses.length,
         simpleCourses: fbCourses.filter(c => c.type === 'simple').length,
         premiumCourses: fbCourses.filter(c => c.type === 'premium').length,
+        totalMethodViews: totalViews,
         conversionRate: fbUsers.length > 0 ? ((premiumUsers / fbUsers.length) * 100).toFixed(1) : '0'
       });
     } catch (fbErr) {
@@ -341,14 +371,19 @@ export const AdminDashboard: React.FC = () => {
 
     try {
       for (const tier of defaultTiers) {
-        await fetch('/api/packages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(tier)
-        });
+        try {
+          await fetch('/api/packages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(tier)
+          });
+        } catch {
+          // ignore REST error on static site
+        }
+        await firebaseSavePackage(tier);
       }
       showToast('Created 7, 30, 90, 365 Days slots! You can now adjust their prices anytime.', 'success');
       loadAdminData();
@@ -652,6 +687,19 @@ export const AdminDashboard: React.FC = () => {
         setAdModalOpen(false);
         setEditingAd(null);
         loadAdminData();
+        return;
+      }
+    } catch {
+      // fallback to Firestore on Static Site
+    }
+
+    try {
+      if (editingAd) {
+        await firebaseSaveAd(editingAd);
+        showToast('Advertisement saved to Cloud!', 'success');
+        setAdModalOpen(false);
+        setEditingAd(null);
+        loadAdminData();
       }
     } catch {
       showToast('Failed to save advertisement', 'error');
@@ -667,7 +715,16 @@ export const AdminDashboard: React.FC = () => {
       if (res.ok) {
         showToast('Ad deleted', 'info');
         loadAdminData();
+        return;
       }
+    } catch {
+      // fallback
+    }
+
+    try {
+      await firebaseDeleteAd(id);
+      showToast('Ad deleted from Cloud', 'info');
+      loadAdminData();
     } catch {
       showToast('Failed to delete ad', 'error');
     }
@@ -690,7 +747,18 @@ export const AdminDashboard: React.FC = () => {
         showToast('Website Settings saved! Public site updated immediately.', 'success');
         refreshSettings();
         loadAdminData();
+        return;
       }
+    } catch {
+      // fallback to Firestore on Static Site
+    }
+
+    try {
+      const updated = await firebaseSaveSettings(adminSettings);
+      setAdminSettings(updated);
+      showToast('Website Settings saved to Cloud! Public site updated immediately.', 'success');
+      refreshSettings();
+      loadAdminData();
     } catch {
       showToast('Failed to update settings', 'error');
     }
@@ -983,6 +1051,32 @@ export const AdminDashboard: React.FC = () => {
       {/* MAIN VIEWPORT */}
       <main className="flex-1 p-6 md:p-8 overflow-y-auto">
         
+        {/* Mobile Quick Tab Switcher */}
+        <div className="md:hidden w-full mb-4">
+          <label className="block text-[11px] font-semibold text-slate-400 mb-1.5">
+            Admin Panel Options / Tabs:
+          </label>
+          <select 
+            value={activeTab} 
+            onChange={(e) => setActiveTab(e.target.value as AdminTab)}
+            className="w-full bg-[#0a0d18] border border-indigo-500/40 text-white rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:border-indigo-400"
+          >
+            <option value="overview">1. Overview Dashboard</option>
+            <option value="packages">2. Packages & Pricing (৳ BDT)</option>
+            <option value="simple-methods">3. Simple Methods ({simpleMethodsList.length})</option>
+            <option value="premium-methods">4. Premium VIP Methods ({premiumMethodsList.length})</option>
+            <option value="simple-courses">5. Simple Courses ({simpleCoursesList.length})</option>
+            <option value="premium-courses">6. Premium VIP Courses ({premiumCoursesList.length})</option>
+            <option value="users">7. Manage Users ({usersList.length})</option>
+            <option value="payment-requests">8. Payment Requests ({paymentsList.filter(p => p.status === 'pending').length} pending)</option>
+            <option value="payment-settings">9. Payment Settings (bKash & Nagad)</option>
+            <option value="ads">10. Advertisement Manager</option>
+            <option value="website-settings">11. Website Settings</option>
+            <option value="notifications">12. Broadcast Notifications</option>
+            <option value="analytics">13. Analytics Reports</option>
+          </select>
+        </div>
+
         {/* TOP BAR / BREADCRUMB */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 mb-6 border-b border-slate-800/80 gap-4">
           <div>
@@ -996,7 +1090,7 @@ export const AdminDashboard: React.FC = () => {
 
           <div className="flex items-center gap-3">
             <span className="px-2.5 py-1 rounded bg-indigo-950 text-indigo-300 border border-indigo-500/30 text-xs font-mono">
-              Admin: {user?.email}
+              Admin: Super Administrator (Verified)
             </span>
             <button
               onClick={loadAdminData}
@@ -1008,7 +1102,7 @@ export const AdminDashboard: React.FC = () => {
         </div>
 
         {/* 1. OVERVIEW */}
-        {activeTab === 'overview' && analytics && (
+        {activeTab === 'overview' && (
           <div className="space-y-8">
             {/* KPI Metrics Strip */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1018,10 +1112,10 @@ export const AdminDashboard: React.FC = () => {
                   <Users className="w-4 h-4 text-indigo-400" />
                 </div>
                 <div className="text-2xl font-bold font-mono text-white tabular-nums">
-                  {analytics.totalUsers}
+                  {analytics?.totalUsers ?? 0}
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  {analytics.simpleUsers} Simple · {analytics.premiumUsers} VIP
+                  {analytics?.simpleUsers ?? 0} Simple · {analytics?.premiumUsers ?? 0} VIP
                 </p>
               </div>
 
@@ -1031,10 +1125,10 @@ export const AdminDashboard: React.FC = () => {
                   <DollarSign className="w-4 h-4 text-emerald-400" />
                 </div>
                 <div className="text-2xl font-bold font-mono text-emerald-400 tabular-nums">
-                  ৳{analytics.totalRevenueBDT.toLocaleString()} BDT
+                  ৳{Number(analytics?.totalRevenueBDT ?? 0).toLocaleString()} BDT
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  {analytics.approvedPayments} approved orders
+                  {analytics?.approvedPayments ?? 0} approved orders
                 </p>
               </div>
 
@@ -1044,7 +1138,7 @@ export const AdminDashboard: React.FC = () => {
                   <CreditCard className="w-4 h-4 text-amber-400" />
                 </div>
                 <div className="text-2xl font-bold font-mono text-amber-400 tabular-nums">
-                  {analytics.pendingPayments}
+                  {analytics?.pendingPayments ?? 0}
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1">Awaiting TrxID check</p>
               </div>
@@ -1055,10 +1149,10 @@ export const AdminDashboard: React.FC = () => {
                   <FileVideo className="w-4 h-4 text-purple-400" />
                 </div>
                 <div className="text-2xl font-bold font-mono text-purple-400 tabular-nums">
-                  {analytics.totalMethods} Methods · {analytics.totalCourses} Courses
+                  {analytics?.totalMethods ?? 0} Methods · {analytics?.totalCourses ?? 0} Courses
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  {analytics.totalMethodViews.toLocaleString()} total views
+                  {Number(analytics?.totalMethodViews ?? 0).toLocaleString()} total views
                 </p>
               </div>
             </div>
@@ -1825,7 +1919,7 @@ export const AdminDashboard: React.FC = () => {
         )}
 
         {/* 8. PAYMENT SETTINGS */}
-        {activeTab === 'payment-settings' && adminSettings && (
+        {activeTab === 'payment-settings' && (
           <div className="max-w-2xl bg-[#0b0e18] border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
             <div>
               <h3 className="text-base font-bold text-white mb-1">bKash & Nagad Accounts Configuration</h3>
@@ -2001,7 +2095,7 @@ export const AdminDashboard: React.FC = () => {
         )}
 
         {/* 10. WEBSITE SETTINGS */}
-        {activeTab === 'website-settings' && adminSettings && (
+        {activeTab === 'website-settings' && (
           <div className="max-w-3xl bg-[#0b0e18] border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
             <div>
               <h3 className="text-base font-bold text-white mb-1">Global Website Configuration</h3>
@@ -2171,13 +2265,13 @@ export const AdminDashboard: React.FC = () => {
         )}
 
         {/* 12. REPORTS AND ANALYTICS */}
-        {activeTab === 'analytics' && analytics && (
+        {activeTab === 'analytics' && (
           <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="p-6 rounded-2xl bg-[#0b0e18] border border-slate-800">
                 <div className="text-xs text-slate-400 uppercase font-semibold mb-1">Conversion Rate</div>
                 <div className="text-3xl font-bold font-mono text-white tabular-nums">
-                  {analytics.conversionRate}%
+                  {analytics?.conversionRate ?? 0}%
                 </div>
                 <p className="text-xs text-slate-500 mt-2">Percentage of registered users upgraded to Premium</p>
               </div>
@@ -2185,7 +2279,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="p-6 rounded-2xl bg-[#0b0e18] border border-slate-800">
                 <div className="text-xs text-slate-400 uppercase font-semibold mb-1">Total Revenue Collected</div>
                 <div className="text-3xl font-bold font-mono text-emerald-400 tabular-nums">
-                  ৳{analytics.totalRevenueBDT.toLocaleString()} BDT
+                  ৳{Number(analytics?.totalRevenueBDT ?? 0).toLocaleString()} BDT
                 </div>
                 <p className="text-xs text-slate-500 mt-2">Verified via bKash & Nagad manually</p>
               </div>
@@ -2193,7 +2287,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="p-6 rounded-2xl bg-[#0b0e18] border border-slate-800">
                 <div className="text-xs text-slate-400 uppercase font-semibold mb-1">Total Method Views</div>
                 <div className="text-3xl font-bold font-mono text-purple-400 tabular-nums">
-                  {analytics.totalMethodViews.toLocaleString()}
+                  {Number(analytics?.totalMethodViews ?? 0).toLocaleString()}
                 </div>
                 <p className="text-xs text-slate-500 mt-2">Across free and VIP methods</p>
               </div>
